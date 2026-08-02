@@ -483,31 +483,34 @@ body {
 </footer>
 
 <script>
-// ===== Hero Canvas — Recursive cellular automaton that assembles the whale =====
-// Recreates Anthropic's living hero: cells breed, spread, and collapse
-// back into the logo, over and over, like recursive self-improvement.
+// ===== Hero Canvas — Recursive cellular field that keeps assembling the whale =====
+// Faithful to Anthropic's hero: a full-canvas grid of faint cells where a
+// small population of live cells churns continuously. The whale mark acts as a
+// probabilistic attractor — its silhouette keeps emerging from the evolving
+// field and then dissipating, over and over, like recursive self-improvement.
 (function() {
   const canvas = document.getElementById('hero-canvas');
   const ctx = canvas.getContext('2d', { willReadFrequently: true });
   const hero = document.getElementById('hero');
 
-  // Official DeepSeek whale mask (60x45 grid) — the "attractor" shape
+  // Official DeepSeek whale mask (60x45 grid) — the attractor shape
   const WC = __WHALE_CELLS__;
   const WX = __WHALE_W__, WY = __WHALE_H__;
 
-  const CELL = 14;            // cell size (px)
-  const GAP = 4;              // gap between cells
+  const CELL = 13;            // cell size (px)
+  const GAP = 3;              // gap between cells
   const PITCH = CELL + GAP;   // grid pitch
 
   let w, h, cols, rows;
-  let grid, next;             // integer automaton grid: 0=dead, 1..K=age color
-  let base = [];              // whale mask as grid coords (target)
-  let ox = 0, oy = 0;         // grid origin (px) of the whale attractor
+  let grid, next;             // 0=dead, 1..K=age
+  let whaleSet = {};          // lookup "x,y" -> true
+  let ox = 0, oy = 0;         // whale attractor origin (grid coords)
   let mx = -999, my = -999, tmx = -999, tmy = -999;
-  let phase = 0;              // phase clock
+  let cycle = 0;              // cycle counter -> re-seed periodically
+  const MAX_AGE = 5;
 
-  // DeepSeek blue palette (warm accent reserved for the logo node on light bg)
-  const COLORS = ['#4d6bfe', '#3964fe', '#5686fe', '#9db5ff', '#2f4c8f'];
+  // DeepSeek blue palette, darker toward the whale's core
+  const COLORS = ['#9db5ff', '#5686fe', '#3964fe', '#4d6bfe', '#2f4c8f'];
 
   function resize() {
     const r = hero.getBoundingClientRect();
@@ -518,17 +521,31 @@ body {
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     cols = Math.floor(w / PITCH) + 2;
     rows = Math.floor(h / PITCH) + 2;
-    // Place whale attractor: desktop right-center, mobile bottom-center
-    const whaleW = WX * PITCH, whaleH = WY * PITCH;
+    // Scale whale to ~40% of viewport height so it reads as a logo, not a mural
+    const targetH = Math.floor(h * 0.4 / PITCH);
+    const scale = Math.max(10, Math.min(WY, targetH)) / WY;
+    const wW = Math.round(WX * scale), wH = Math.round(WY * scale);
+    let oxp, oyp;
     if (w < 768) {
-      ox = Math.floor((w - whaleW) / 2 / PITCH);
-      oy = Math.floor(h * 0.52 / PITCH);
+      oxp = Math.floor((w - wW * PITCH) / 2 / PITCH);
+      oyp = Math.floor(h * 0.55 / PITCH);
     } else {
-      ox = Math.floor((w - whaleW - Math.max(90, w * 0.07)) / PITCH);
-      oy = Math.floor((h - whaleH) / 2 / PITCH);
+      oxp = Math.floor((w - wW * PITCH - Math.max(60, w * 0.05)) / PITCH);
+      oyp = Math.floor((h - wH * PITCH) / 2 / PITCH);
     }
-    base = WC.map(function(c) { return [c[0] + ox, c[1] + oy]; });
-    buildWhaleSet();
+    // Downsample whale mask to wW x wH grid
+    // WC is [[x,y],...]; convert to a 2D lookup
+    const wmask = {};
+    WC.forEach(function(c) { wmask[c[1] * WX + c[0]] = true; });
+    whaleSet = {};
+    for (let gy = 0; gy < wH; gy++)
+      for (let gx = 0; gx < wW; gx++) {
+        const sx = Math.floor(gx * WX / wW), sy = Math.floor(gy * WY / wH);
+        if (wmask[sy * WX + sx]) {
+          whaleSet[(gx + oxp) + ',' + (gy + oyp)] = true;
+        }
+      }
+    ox = oxp; oy = oyp;
     initGrid();
   }
 
@@ -538,15 +555,27 @@ body {
     seedWhale();
   }
 
-  // Initialize: sparse embers that the automaton grows into a full whale
+  // Initialize: fill the whale silhouette with cells; the automaton then keeps
+  // it alive and churning, with fresh cells feeding in from the edges.
   function seedWhale() {
     clearGrid(grid);
-    // start with ~40% of whale cells lit, the rest fill in via Conway breeding
-    base.forEach(function(p) {
-      if (p[0] >= 0 && p[0] < cols && p[1] >= 0 && p[1] < rows && Math.random() < 0.4) {
-        grid[p[1]][p[0]] = 2;
+    // lit ~85% of whale cells so the logo reads instantly on load
+    const keys = Object.keys(whaleSet);
+    for (let i = 0; i < keys.length; i++) {
+      if (Math.random() < 0.85) {
+        const xy = keys[i].split(',');
+        const gx = +xy[0], gy = +xy[1];
+        if (gx >= 0 && gx < cols && gy >= 0 && gy < rows) grid[gy][gx] = 1 + Math.floor(Math.random() * 3);
       }
-    });
+    }
+    // a few stray cells just outside to seed the outer churn
+    const sH = Math.round(WY * Math.min(1, (h * 0.4 / PITCH) / WY));
+    const sW = Math.round(WX * Math.min(1, (h * 0.4 / PITCH) / WY));
+    for (let i = 0; i < 8; i++) {
+      const gx = ox + Math.floor(Math.random() * sW);
+      const gy = oy + Math.floor(Math.random() * sH) + sH;   // below the whale
+      if (gx >= 0 && gx < cols && gy >= 0 && gy < rows && !whaleSet[gx + ',' + gy]) grid[gy][gx] = 1;
+    }
   }
 
   function clearGrid(g) {
@@ -565,70 +594,80 @@ body {
     return n;
   }
 
-  // Precompute whale mask as a lookup (grid coords -> true)
-  let whaleSet = null;
-  function buildWhaleSet() {
-    whaleSet = {};
-    base.forEach(function(p) { whaleSet[p[0] + ',' + p[1]] = true; });
+  // Distance attractor strength (0..1) for a cell: 1 on whale, fading away
+  let attractCache = {};
+  function attractAt(x, y) {
+    const key = x + ',' + y;
+    if (attractCache[key] !== undefined) return attractCache[key];
+    let a = 0;
+    for (let dy = -3; dy <= 3 && a < 1; dy++)
+      for (let dx = -3; dx <= 3 && a < 1; dx++) {
+        if (whaleSet[(x + dx) + ',' + (y + dy)]) a = Math.max(a, 1 - (Math.abs(dx) + Math.abs(dy)) / 7);
+      }
+    attractCache[key] = a;
+    return a;
   }
 
-  // One automaton tick: whale core holds its shape; living cells churn and
-  // a breathing wavefront rolls outward, like the loop compounding.
+  function rebuildAttractCache() {
+    attractCache = {};
+  }
+
+  // One automaton tick: cells churn under Conway-like rules; the whale field
+  // biases births/survival so the silhouette repeatedly condenses out of the
+  // noise. Max age caps every cell, so nothing freezes — it keeps growing.
   function step() {
     for (let y = 0; y < rows; y++)
       for (let x = 0; x < cols; x++) {
-        const onWhale = !!whaleSet[x + ',' + y];
         const n = countNeighbors(grid, x, y);
+        const a = attractAt(x, y);
         let v = 0;
-        if (onWhale) {
-          if (grid[y][x] > 0) {
-            // lit whale cell stays, aging to vary shade
-            v = Math.min(5, grid[y][x] + 1);
-          } else if (n >= 2 && n <= 3) {
-            // empty whale cell fills in when surrounded (grows into shape)
-            v = Math.random() < 0.75 ? 2 : 0;
-          }
-        } else if (grid[y][x] > 0) {
-          // living off-whale cell: Conway survival with short life
-          if (n === 2 || n === 3) {
-            v = Math.min(4, grid[y][x] + 1);
+        if (grid[y][x] > 0) {
+          if (a >= 0.99) {
+            // inside the whale silhouette: near-immortal, just cycles shade
+            v = grid[y][x] + 1 > MAX_AGE ? 1 : grid[y][x] + 1;
+          } else if (a >= 0.5) {
+            // whale fringe: strong persistence, occasional churn
+            if (n === 2 || n === 3 || Math.random() < 0.85) v = Math.min(MAX_AGE, grid[y][x] + 1);
+            else v = 0;
+          } else if (n === 2 || n === 3) {
+            v = Math.min(MAX_AGE, grid[y][x] + 1);
+          } else if (n === 1 && Math.random() < 0.3 * a) {
+            v = grid[y][x];
           } else {
             v = 0;
           }
         } else {
-          // empty off-whale cell: birth when it has 3 living neighbors
-          if (n === 3 && Math.random() < 0.9) {
-            v = 1;
+          // empty: births concentrated on the whale fringe (growth boundary)
+          if (n === 3) {
+            v = Math.random() < 0.15 + 0.7 * Math.min(1, a * 2) ? 1 : 0;
+          } else if (n === 2) {
+            v = Math.random() < 0.08 * a ? 1 : 0;
           }
         }
         next[y][x] = v;
       }
 
-    // wavefront: spawn 2-cell-thick arcs that roll outward from the whale
-    const waveR = (Math.sin(phase * 0.6) + 1) / 2;   // 0..1 ~5s breathing
-    const rMin = 2 + waveR * 12, rMax = rMin + 2;
-    const cx = ox + Math.floor(WX / 2), cy = oy + Math.floor(WY / 2);
-    for (let a = 0; a < 360; a += 18) {
-      const rad = a * Math.PI / 180;
-      for (let rr = rMin; rr <= rMax; rr++) {
-        const gx = Math.round(cx + Math.cos(rad) * rr);
-        const gy = Math.round(cy + Math.sin(rad) * rr * 0.85);
-        if (gx >= 0 && gx < cols && gy >= 0 && gy < rows && !whaleSet[gx + ',' + gy]) {
-          if (Math.random() < 0.55) next[gy][gx] = 1;
-        }
-      }
+    // Slow feeding rain keeps new cells arriving near the whale -> growth
+    if (Math.random() < 0.02) {
+      const cx = ox + 8, cy = oy + 8;
+      const ang = Math.random() * Math.PI * 2;
+      const dist = 3 + Math.random() * 12;
+      const gx = Math.round(cx + Math.cos(ang) * dist);
+      const gy = Math.round(cy + Math.sin(ang) * dist * 0.85);
+      if (gx >= 0 && gx < cols && gy >= 0 && gy < rows) next[gy][gx] = 1;
     }
 
     const tmp = grid; grid = next; next = tmp;
+    cycle++;
+    // Every ~20s re-seed to restart the grow-out (the loop repeats)
+    if (cycle > 200) { cycle = 0; seedWhale(); }
   }
 
-  // Draw one rounded cell at grid (gx, gy) with given age color
   function drawCell(gx, gy, age, t) {
     const px = gx * PITCH, py = gy * PITCH;
-    const pulse = 0.94 + 0.06 * Math.sin(t * 2 + (gx + gy) * 0.3);
+    const pulse = 0.93 + 0.07 * Math.sin(t * 2 + (gx + gy) * 0.4);
     const s = CELL * pulse;
-    const col = COLORS[Math.min(age, COLORS.length) - 1];
-    ctx.fillStyle = col;
+    ctx.fillStyle = COLORS[Math.min(age, MAX_AGE) - 1];
     roundRect(px + (CELL - s) / 2 + 0.5, py + (CELL - s) / 2 + 0.5, s - 1, s - 1, s * 0.3);
   }
 
@@ -649,42 +688,35 @@ body {
     const t = performance.now() / 1000;
     mx += (tmx - mx) * 0.06; my += (tmy - my) * 0.06;
 
-    // ---- Background: full canvas of faint rounded cells (the "resting" grid) ----
-    ctx.globalAlpha = 1;
-    ctx.fillStyle = 'rgba(237,243,254,0.55)';
+    // ---- Resting grid: faint rounded cells across the whole canvas ----
+    ctx.fillStyle = 'rgba(237,243,254,0.6)';
     for (let gy = 0; gy < rows; gy++)
       for (let gx = 0; gx < cols; gx++) {
-        if (grid[gy][gx] > 0) continue; // live cells drawn brighter below
+        if (grid[gy][gx] > 0) continue;
         roundRect(gx * PITCH + 1, gy * PITCH + 1, CELL - 1, CELL - 1, CELL * 0.3);
       }
 
-    // ---- Foreground: live automaton cells ----
+    // ---- Live cells ----
     for (let gy = 0; gy < rows; gy++)
       for (let gx = 0; gx < cols; gx++) {
         const v = grid[gy][gx];
-        if (v > 0) {
-          // cells near cursor brighten
-          const cx = gx * PITCH + CELL / 2, cy = gy * PITCH + CELL / 2;
-          const dist = Math.sqrt((cx - mx) * (cx - mx) + (cy - my) * (cy - my));
-          if (dist < 140) {
-            ctx.globalAlpha = 0.5 + (140 - dist) / 140 * 0.5;
-            drawCell(gx, gy, v, t);
-            ctx.globalAlpha = 1;
-          } else {
-            drawCell(gx, gy, v, t);
-          }
+        if (v <= 0) continue;
+        const px = gx * PITCH + CELL / 2, py = gy * PITCH + CELL / 2;
+        const dist = Math.sqrt((px - mx) * (px - mx) + (py - my) * (py - my));
+        if (dist < 140) {
+          ctx.globalAlpha = 0.5 + (140 - dist) / 140 * 0.5;
+          drawCell(gx, gy, v, t);
+          ctx.globalAlpha = 1;
+        } else {
+          drawCell(gx, gy, v, t);
         }
       }
-
-    // ---- Phase clock: time-based so the ripple breathes continuously ----
-    phase = t;
   }
 
   function loop() {
-    phase = performance.now() / 1000;
     draw();
-    // automaton ticks at ~10fps, drawing at full framerate (like the reference)
-    if (Math.floor(phase * 10) !== Math.floor((performance.now() - 100) / 100)) {
+    // automaton ticks ~10x/sec, drawing at full framerate (like the reference)
+    if (Math.floor(performance.now() / 100) !== Math.floor((performance.now() - 100) / 100)) {
       step();
     }
     requestAnimationFrame(loop);
@@ -701,9 +733,10 @@ body {
   }, {passive: true});
   hero.addEventListener('touchend', function() { tmx = -999; tmy = -999; });
 
-  window.addEventListener('resize', resize);
+  window.addEventListener('resize', function() { resize(); rebuildAttractCache(); });
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) { resize(); draw(); return; }
   resize();
+  rebuildAttractCache();
   requestAnimationFrame(loop);
 })();
 
