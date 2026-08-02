@@ -76,7 +76,7 @@ def build_timeline_svg():
 
         # End node with whale pixels
         parts.append(f'<g class="node-end node-{li}">')
-        parts.append(f'<circle cx="515" cy="{y}" r="32" fill="#fff" stroke="var(--border-subtle)" stroke-width="1.5"/>')
+        parts.append(f'<circle cx="515" cy="{y}" r="32" fill="var(--bg-page)" stroke="var(--border-subtle)" stroke-width="1.5"/>')
         parts.append(f'<g class="node-pop">')
         parts.append(node_rects[node_key[li]])
         parts.append('</g>')
@@ -91,6 +91,8 @@ def build_timeline_svg():
     return '\n'.join(parts)
 
 TIMELINE_SVG = build_timeline_svg()
+# Make whale-node pixels theme-aware (SVG fill can use CSS custom properties)
+TIMELINE_SVG = TIMELINE_SVG.replace('fill="#4D6BFE"', 'fill="var(--accent)"')
 
 # ---- Hero whale mask (for canvas) ----
 # The whale cells, normalized for canvas drawing. Keep as-is (60x45 grid).
@@ -157,6 +159,40 @@ PAGE = r"""<!DOCTYPE html>
   --radius-md: 10px;
 }
 
+/* ===== Dark theme ===== */
+[data-theme="dark"] {
+  --ds-blue-200: #1a2f6e;
+  --ds-blue-100: #22366f;
+  --ds-blue-50:  #182742;
+  --ds-neutral-1000: #f0f2f5;
+  --ds-neutral-700:  #c9cdd4;
+  --ds-neutral-600:  #a4aab4;
+  --ds-neutral-400:  #7d8490;
+  --ds-neutral-200:  #3a4250;
+  --ds-neutral-100:  #2a313d;
+  --ds-neutral-75:   #202631;
+  --ds-neutral-50:   #1a1f28;
+  --ds-neutral-00:   #161a21;
+  --color-slate-150: #2a313d;
+
+  --text-primary:    var(--ds-neutral-1000);
+  --text-secondary:  var(--ds-neutral-700);
+  --text-tertiary:   var(--ds-neutral-600);
+  --bg-page:         var(--ds-neutral-00);
+  --bg-surface:      var(--ds-neutral-75);
+  --border-subtle:   var(--ds-neutral-200);
+  --border-default:  var(--ds-neutral-100);
+  --accent:          #6b87ff;
+  --accent-bright:   #7d97ff;
+  --accent-soft:     #1c2a4d;
+  --accent-warm:     #e08a67;
+}
+
+/* Smooth theme transition */
+html.theme-anim, html.theme-anim * {
+  transition: background-color 0.5s ease, color 0.5s ease, border-color 0.5s ease, fill 0.5s ease, stroke 0.5s ease, opacity 0.5s ease !important;
+}
+
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
 body {
@@ -171,13 +207,13 @@ body {
 .site-header {
   position: fixed; top: 0; left: 0; right: 0; z-index: 100;
   padding: 14px var(--page-margin);
-  background: rgba(255,255,255,0.72);
+  background: color-mix(in srgb, var(--bg-page) 72%, transparent);
   backdrop-filter: saturate(180%) blur(20px);
   -webkit-backdrop-filter: saturate(180%) blur(20px);
   border-bottom: 1px solid transparent;
   transition: border-color 0.3s ease, background 0.3s ease;
 }
-.site-header.scrolled { border-bottom-color: var(--border-subtle); background: rgba(255,255,255,0.88); }
+.site-header.scrolled { border-bottom-color: var(--border-subtle); background: color-mix(in srgb, var(--bg-page) 88%, transparent); }
 .header-inner { max-width: 1400px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; }
 .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text-primary); }
 .logo-icon { width: 28px; height: 21px; flex-shrink: 0; color: var(--accent); }
@@ -187,6 +223,20 @@ body {
 .header-nav a { text-decoration: none; color: var(--text-secondary); font-size: 14px; font-weight: 500; transition: color 0.2s ease; }
 .header-nav a:hover { color: var(--text-primary); }
 
+/* Theme toggle */
+.theme-toggle {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 36px; height: 36px; border: 1px solid var(--border-subtle);
+  border-radius: 50%; background: transparent; color: var(--text-secondary);
+  cursor: pointer; transition: color 0.2s ease, border-color 0.2s ease, background 0.3s ease, transform 0.3s ease;
+}
+.theme-toggle:hover { color: var(--text-primary); border-color: var(--accent); background: var(--accent-soft); transform: rotate(20deg); }
+.theme-toggle svg { position: absolute; }
+.theme-toggle .theme-icon-moon { display: none; }
+.theme-toggle .theme-icon-sun { display: block; }
+[data-theme="dark"] .theme-toggle .theme-icon-moon { display: block; }
+[data-theme="dark"] .theme-toggle .theme-icon-sun { display: none; }
+
 /* ===== Hero: Whale cellular assembly ===== */
 .hero {
   position: relative; height: 100vh; min-height: 600px;
@@ -195,7 +245,7 @@ body {
 .hero-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 .hero-overlay {
   position: absolute; inset: 0; z-index: 1; pointer-events: none;
-  background: radial-gradient(ellipse at 70% 45%, transparent 25%, rgba(255,255,255,0.5) 72%);
+  background: radial-gradient(ellipse at 70% 45%, transparent 25%, color-mix(in srgb, var(--bg-page) 55%, transparent) 72%);
 }
 .hero-content {
   position: absolute; inset: 0; z-index: 2;
@@ -358,7 +408,7 @@ body {
   .hero-title { font-size: clamp(30px, 9vw, 46px); margin-bottom: 12px; }
   .hero-subtitle { font-size: 14px; max-width: 100%; }
   .hero-overlay {
-    background: radial-gradient(ellipse at 50% 30%, transparent 20%, rgba(255,255,255,0.55) 75%);
+    background: radial-gradient(ellipse at 50% 30%, transparent 20%, color-mix(in srgb, var(--bg-page) 60%, transparent) 75%);
   }
   .scroll-indicator { bottom: 16px; }
   .header-nav { gap: 14px; }
@@ -377,7 +427,7 @@ body {
       __LOGO__
       <span class="logo-text">DeepSeek <span>Research</span></span>
     </a>
-    <nav><ul class="header-nav"><li><a href="#timeline">Research</a></li><li><a href="#about">About</a></li></ul></nav>
+    <nav><ul class="header-nav"><li><a href="#timeline">Research</a></li><li><a href="#about">About</a></li><li><button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme" title="Toggle theme"><svg class="theme-icon-sun" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg><svg class="theme-icon-moon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button></li></ul></nav>
   </div>
 </header>
 
@@ -483,34 +533,47 @@ body {
 </footer>
 
 <script>
-// ===== Hero Canvas — Recursive cellular field that keeps assembling the whale =====
-// Faithful to Anthropic's hero: a full-canvas grid of faint cells where a
-// small population of live cells churns continuously. The whale mark acts as a
-// probabilistic attractor — its silhouette keeps emerging from the evolving
-// field and then dissipating, over and over, like recursive self-improvement.
+// ===== Hero Canvas — Recursive whale-of-whales: little whale icons radiate
+// outward in waves, each assembling the big whale silhouette, over and over. =====
 (function() {
   const canvas = document.getElementById('hero-canvas');
   const ctx = canvas.getContext('2d', { willReadFrequently: true });
   const hero = document.getElementById('hero');
 
-  // Official DeepSeek whale mask (60x45 grid) — the attractor shape
+  // Official DeepSeek whale mark path (drawn inside each grid cell)
+  const WHALE_D = '__WHALE_PATH__';
+  // Big-whale silhouette mask (60x45 grid): [[x,y],...]
   const WC = __WHALE_CELLS__;
   const WX = __WHALE_W__, WY = __WHALE_H__;
 
-  const CELL = 13;            // cell size (px)
+  const CELL = 16;            // cell size (px) — one little whale per cell
   const GAP = 3;              // gap between cells
-  const PITCH = CELL + GAP;   // grid pitch
+  const PITCH = CELL + GAP;
 
   let w, h, cols, rows;
-  let grid, next;             // 0=dead, 1..K=age
-  let whaleSet = {};          // lookup "x,y" -> true
-  let ox = 0, oy = 0;         // whale attractor origin (grid coords)
+  let whaleCells = [];        // [{gx, gy, ox, oy, px, py, dist}] for the big whale
+  let ox = 0, oy = 0;         // big-whale origin (grid coords)
+  let centerGX = 0, centerGY = 0;
   let mx = -999, my = -999, tmx = -999, tmy = -999;
-  let cycle = 0;              // cycle counter -> re-seed periodically
-  const MAX_AGE = 5;
 
-  // DeepSeek blue palette, darker toward the whale's core
-  const COLORS = ['#9db5ff', '#5686fe', '#3964fe', '#4d6bfe', '#2f4c8f'];
+  // Wave state: distance from center that is currently "lit", grows then resets
+  let waveD = 0;              // current wave radius (cells)
+  let WAVE_MAX = 26;          // max radius in cells (set in resize)
+  const WAVE_SPEED = 0.16;    // cells per tick (~10 ticks/s -> ~16s per wave)
+  const FADE = 0.012;         // trailing fade speed (slow -> silhouette lingers)
+
+  // Theme-aware colors (read from CSS custom props so dark mode works)
+  let C_GRID = 'rgba(237,243,254,0.6)';
+  let C_WHALE = '#4d6bfe';
+  let C_WAVE = 'rgba(77,107,254,0.35)';
+  function readThemeColors() {
+    const cs = getComputedStyle(document.documentElement);
+    C_WHALE = cs.getPropertyValue('--accent').trim() || '#4d6bfe';
+    C_WAVE = 'rgba(107,135,255,0.35)';
+    // grid: accent-soft-ish translucent in light, faint blue-gray in dark
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    C_GRID = isDark ? 'rgba(58,66,80,0.5)' : 'rgba(237,243,254,0.6)';
+  }
 
   function resize() {
     const r = hero.getBoundingClientRect();
@@ -521,166 +584,77 @@ body {
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     cols = Math.floor(w / PITCH) + 2;
     rows = Math.floor(h / PITCH) + 2;
-    // Scale whale to ~40% of viewport height so it reads as a logo, not a mural
-    const targetH = Math.floor(h * 0.4 / PITCH);
+
+    // Scale the big whale to ~72% of viewport height so it reads as a logo
+    const targetH = Math.floor(h * 0.72 / PITCH);
     const scale = Math.max(10, Math.min(WY, targetH)) / WY;
     const wW = Math.round(WX * scale), wH = Math.round(WY * scale);
     let oxp, oyp;
     if (w < 768) {
+      // mobile: whale centered, slightly lower (text sits above)
       oxp = Math.floor((w - wW * PITCH) / 2 / PITCH);
-      oyp = Math.floor(h * 0.55 / PITCH);
+      oyp = Math.floor((h - wH * PITCH) / 2 / PITCH) + Math.floor(h * 0.18 / PITCH);
     } else {
-      oxp = Math.floor((w - wW * PITCH - Math.max(60, w * 0.05)) / PITCH);
+      oxp = Math.floor((w - wW * PITCH - Math.max(70, w * 0.05)) / PITCH);
       oyp = Math.floor((h - wH * PITCH) / 2 / PITCH);
     }
-    // Downsample whale mask to wW x wH grid
-    // WC is [[x,y],...]; convert to a 2D lookup
+    ox = oxp; oy = oyp;
+    centerGX = ox + Math.floor(wW / 2);
+    centerGY = oy + Math.floor(wH / 2);
+    WAVE_MAX = Math.ceil(Math.sqrt(wW * wW + wH * wH) / 2) + 2;
+
+    // Build whale cell list with normalized distance from whale center
     const wmask = {};
     WC.forEach(function(c) { wmask[c[1] * WX + c[0]] = true; });
-    whaleSet = {};
+    whaleCells = [];
     for (let gy = 0; gy < wH; gy++)
       for (let gx = 0; gx < wW; gx++) {
         const sx = Math.floor(gx * WX / wW), sy = Math.floor(gy * WY / wH);
-        if (wmask[sy * WX + sx]) {
-          whaleSet[(gx + oxp) + ',' + (gy + oyp)] = true;
-        }
+        if (!wmask[sy * WX + sx]) continue;
+        const absX = gx + oxp, absY = gy + oyp;
+        const dist = Math.sqrt((absX - centerGX) * (absX - centerGX) + (absY - centerGY) * (absY - centerGY));
+        whaleCells.push({
+          gx: absX, gy: absY,
+          dist: dist,
+          // baseline always-on so the big whale silhouette never disappears
+          light: 0.4,
+          target: 0.4,
+        });
       }
-    ox = oxp; oy = oyp;
-    initGrid();
   }
 
-  function initGrid() {
-    grid = Array.from({length: rows}, function() { return new Array(cols).fill(0); });
-    next = Array.from({length: rows}, function() { return new Array(cols).fill(0); });
-    seedWhale();
-  }
-
-  // Initialize: fill the whale silhouette with cells; the automaton then keeps
-  // it alive and churning, with fresh cells feeding in from the edges.
-  function seedWhale() {
-    clearGrid(grid);
-    // lit ~85% of whale cells so the logo reads instantly on load
-    const keys = Object.keys(whaleSet);
-    for (let i = 0; i < keys.length; i++) {
-      if (Math.random() < 0.85) {
-        const xy = keys[i].split(',');
-        const gx = +xy[0], gy = +xy[1];
-        if (gx >= 0 && gx < cols && gy >= 0 && gy < rows) grid[gy][gx] = 1 + Math.floor(Math.random() * 3);
-      }
-    }
-    // a few stray cells just outside to seed the outer churn
-    const sH = Math.round(WY * Math.min(1, (h * 0.4 / PITCH) / WY));
-    const sW = Math.round(WX * Math.min(1, (h * 0.4 / PITCH) / WY));
-    for (let i = 0; i < 8; i++) {
-      const gx = ox + Math.floor(Math.random() * sW);
-      const gy = oy + Math.floor(Math.random() * sH) + sH;   // below the whale
-      if (gx >= 0 && gx < cols && gy >= 0 && gy < rows && !whaleSet[gx + ',' + gy]) grid[gy][gx] = 1;
-    }
-  }
-
-  function clearGrid(g) {
-    for (let y = 0; y < rows; y++)
-      for (let x = 0; x < cols; x++) g[y][x] = 0;
-  }
-
-  function countNeighbors(g, x, y) {
-    let n = 0;
-    for (let dy = -1; dy <= 1; dy++)
-      for (let dx = -1; dx <= 1; dx++) {
-        if (!dx && !dy) continue;
-        const nx = x + dx, ny = y + dy;
-        if (nx >= 0 && nx < cols && ny >= 0 && ny < rows && g[ny][nx] > 0) n++;
-      }
-    return n;
-  }
-
-  // Distance attractor strength (0..1) for a cell: 1 on whale, fading away
-  let attractCache = {};
-  function attractAt(x, y) {
-    const key = x + ',' + y;
-    if (attractCache[key] !== undefined) return attractCache[key];
-    let a = 0;
-    for (let dy = -3; dy <= 3 && a < 1; dy++)
-      for (let dx = -3; dx <= 3 && a < 1; dx++) {
-        if (whaleSet[(x + dx) + ',' + (y + dy)]) a = Math.max(a, 1 - (Math.abs(dx) + Math.abs(dy)) / 7);
-      }
-    attractCache[key] = a;
-    return a;
-  }
-
-  function rebuildAttractCache() {
-    attractCache = {};
-  }
-
-  // One automaton tick: cells churn under Conway-like rules; the whale field
-  // biases births/survival so the silhouette repeatedly condenses out of the
-  // noise. Max age caps every cell, so nothing freezes — it keeps growing.
-  function step() {
-    for (let y = 0; y < rows; y++)
-      for (let x = 0; x < cols; x++) {
-        const n = countNeighbors(grid, x, y);
-        const a = attractAt(x, y);
-        let v = 0;
-        if (grid[y][x] > 0) {
-          if (a >= 0.99) {
-            // inside the whale silhouette: near-immortal, just cycles shade
-            v = grid[y][x] + 1 > MAX_AGE ? 1 : grid[y][x] + 1;
-          } else if (a >= 0.5) {
-            // whale fringe: strong persistence, occasional churn
-            if (n === 2 || n === 3 || Math.random() < 0.85) v = Math.min(MAX_AGE, grid[y][x] + 1);
-            else v = 0;
-          } else if (n === 2 || n === 3) {
-            v = Math.min(MAX_AGE, grid[y][x] + 1);
-          } else if (n === 1 && Math.random() < 0.3 * a) {
-            v = grid[y][x];
-          } else {
-            v = 0;
-          }
-        } else {
-          // empty: births concentrated on the whale fringe (growth boundary)
-          if (n === 3) {
-            v = Math.random() < 0.15 + 0.7 * Math.min(1, a * 2) ? 1 : 0;
-          } else if (n === 2) {
-            v = Math.random() < 0.08 * a ? 1 : 0;
-          }
-        }
-        next[y][x] = v;
-      }
-
-    // Slow feeding rain keeps new cells arriving near the whale -> growth
-    if (Math.random() < 0.02) {
-      const cx = ox + 8, cy = oy + 8;
-      const ang = Math.random() * Math.PI * 2;
-      const dist = 3 + Math.random() * 12;
-      const gx = Math.round(cx + Math.cos(ang) * dist);
-      const gy = Math.round(cy + Math.sin(ang) * dist * 0.85);
-      if (gx >= 0 && gx < cols && gy >= 0 && gy < rows) next[gy][gx] = 1;
-    }
-
-    const tmp = grid; grid = next; next = tmp;
-    cycle++;
-    // Every ~20s re-seed to restart the grow-out (the loop repeats)
-    if (cycle > 200) { cycle = 0; seedWhale(); }
-  }
-
-  function drawCell(gx, gy, age, t) {
-    const px = gx * PITCH, py = gy * PITCH;
-    const pulse = 0.93 + 0.07 * Math.sin(t * 2 + (gx + gy) * 0.4);
-    const s = CELL * pulse;
-    ctx.fillStyle = COLORS[Math.min(age, MAX_AGE) - 1];
-    roundRect(px + (CELL - s) / 2 + 0.5, py + (CELL - s) / 2 + 0.5, s - 1, s - 1, s * 0.3);
-  }
-
-  function roundRect(x, y, w, h, r) {
-    r = Math.min(r, w / 2, h / 2);
+  // Draw the little whale mark centered in a cell
+  function drawMiniWhale(px, py, alpha) {
+    ctx.save();
+    ctx.translate(px + CELL / 2, py + CELL / 2);
+    ctx.scale(0.6, 0.6);   // whale path viewBox 27x21 → ~16x13px
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = C_WHALE;
     ctx.beginPath();
-    ctx.moveTo(x + r, y);
-    ctx.arcTo(x + w, y, x + w, y + h, r);
-    ctx.arcTo(x + w, y + h, x, y + h, r);
-    ctx.arcTo(x, y + h, x, y, r);
-    ctx.arcTo(x, y, x + w, y, r);
-    ctx.closePath();
-    ctx.fill();
+    const d = new Path2D(WHALE_D);
+    ctx.fill(d);
+    ctx.restore();
+  }
+
+  function step() {
+    // advance the wave
+    waveD += WAVE_SPEED;
+    if (waveD > WAVE_MAX) {
+      waveD = 0;                     // loop the wave
+    }
+    // each whale cell: baseline silhouette always on; the wave adds a bright
+    // pulse at its leading edge and gently fades back behind it.
+    for (let i = 0; i < whaleCells.length; i++) {
+      const c = whaleCells[i];
+      // band of cells just inside the front is boosted to full brightness
+      const band = Math.abs(c.dist - waveD);
+      const boost = band < 2.5 ? (1 - band / 2.5) : 0;
+      c.target = 0.4 + 0.6 * Math.max(0, boost);
+      // inside the swept area: also keep a mild afterglow above baseline
+      if (c.dist <= waveD) c.target = Math.max(c.target, 0.55);
+      c.light += (c.target - c.light) * 0.15;
+      if (c.light < 0.004) c.light = 0.4;
+    }
   }
 
   function draw() {
@@ -688,34 +662,50 @@ body {
     const t = performance.now() / 1000;
     mx += (tmx - mx) * 0.06; my += (tmy - my) * 0.06;
 
-    // ---- Resting grid: faint rounded cells across the whole canvas ----
-    ctx.fillStyle = 'rgba(237,243,254,0.6)';
+    // ---- Resting grid: faint rounded cells everywhere ----
+    ctx.fillStyle = C_GRID;
     for (let gy = 0; gy < rows; gy++)
       for (let gx = 0; gx < cols; gx++) {
-        if (grid[gy][gx] > 0) continue;
         roundRect(gx * PITCH + 1, gy * PITCH + 1, CELL - 1, CELL - 1, CELL * 0.3);
       }
 
-    // ---- Live cells ----
-    for (let gy = 0; gy < rows; gy++)
-      for (let gx = 0; gx < cols; gx++) {
-        const v = grid[gy][gx];
-        if (v <= 0) continue;
-        const px = gx * PITCH + CELL / 2, py = gy * PITCH + CELL / 2;
-        const dist = Math.sqrt((px - mx) * (px - mx) + (py - my) * (py - my));
-        if (dist < 140) {
-          ctx.globalAlpha = 0.5 + (140 - dist) / 140 * 0.5;
-          drawCell(gx, gy, v, t);
-          ctx.globalAlpha = 1;
-        } else {
-          drawCell(gx, gy, v, t);
-        }
-      }
+    // ---- Whale cells: little whales lit by the passing wave ----
+    for (let i = 0; i < whaleCells.length; i++) {
+      const c = whaleCells[i];
+      const px = c.gx * PITCH, py = c.gy * PITCH;
+      if (c.light <= 0) continue;
+      // cursor glow boost
+      const ccx = px + CELL / 2, ccy = py + CELL / 2;
+      const dist = Math.sqrt((ccx - mx) * (ccx - mx) + (ccy - my) * (ccy - my));
+      const boost = dist < 160 ? (160 - dist) / 160 * 0.35 : 0;
+      drawMiniWhale(px, py, Math.min(1, c.light + boost));
+    }
+
+    // ---- Wave ring highlight ----
+    if (waveD < WAVE_MAX) {
+      ctx.strokeStyle = C_WAVE;
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(centerGX * PITCH + CELL / 2, centerGY * PITCH + CELL / 2, waveD * PITCH, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+  }
+
+  function roundRect(x, y, ww, hh, r) {
+    r = Math.min(r, ww / 2, hh / 2);
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + ww, y, x + ww, y + hh, r);
+    ctx.arcTo(x + ww, y + hh, x, y + hh, r);
+    ctx.arcTo(x, y + hh, x, y, r);
+    ctx.arcTo(x, y, x + ww, y, r);
+    ctx.closePath();
+    ctx.fill();
   }
 
   function loop() {
     draw();
-    // automaton ticks ~10x/sec, drawing at full framerate (like the reference)
+    // automaton ticks ~10x/sec, drawing at full framerate
     if (Math.floor(performance.now() / 100) !== Math.floor((performance.now() - 100) / 100)) {
       step();
     }
@@ -733,10 +723,12 @@ body {
   }, {passive: true});
   hero.addEventListener('touchend', function() { tmx = -999; tmy = -999; });
 
-  window.addEventListener('resize', function() { resize(); rebuildAttractCache(); });
+  window.addEventListener('resize', resize);
+  // re-read theme colors whenever the theme changes
+  window.addEventListener('themechange', readThemeColors);
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) { resize(); draw(); return; }
+  readThemeColors();
   resize();
-  rebuildAttractCache();
   requestAnimationFrame(loop);
 })();
 
@@ -821,6 +813,29 @@ body {
   }, {passive: true});
 })();
 
+// ===== Theme Toggle =====
+(function() {
+  const btn = document.getElementById('theme-toggle');
+  const html = document.documentElement;
+  // restore saved preference (or system preference)
+  try {
+    const saved = localStorage.getItem('ds-theme');
+    const pref = saved || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    html.setAttribute('data-theme', pref);
+  } catch (e) {}
+  if (!btn) return;
+  btn.addEventListener('click', function() {
+    const cur = html.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+    const next = cur === 'dark' ? 'light' : 'dark';
+    // add transition class briefly for the smooth cross-fade
+    html.classList.add('theme-anim');
+    html.setAttribute('data-theme', next);
+    window.dispatchEvent(new CustomEvent('themechange'));
+    try { localStorage.setItem('ds-theme', next); } catch (e) {}
+    setTimeout(function() { html.classList.remove('theme-anim'); }, 600);
+  });
+})();
+
 // ===== Service Worker (offline / PWA) =====
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', function() {
@@ -843,6 +858,7 @@ PAGE = PAGE.replace('__TIMELINE_SVG__', TIMELINE_SVG)
 PAGE = PAGE.replace('__WHALE_CELLS__', whale_cells_js)
 PAGE = PAGE.replace('__WHALE_W__', str(whale_w))
 PAGE = PAGE.replace('__WHALE_H__', str(whale_h))
+PAGE = PAGE.replace('__WHALE_PATH__', whale_path)
 
 open(BASE + 'index.html', 'w', encoding='utf-8').write(PAGE)
 print('index.html written:', len(PAGE), 'chars')
