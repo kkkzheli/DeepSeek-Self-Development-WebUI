@@ -533,59 +533,52 @@ body {
 </footer>
 
 <script>
-// ===== Hero Canvas — Three-phase recursive grid animation =====
-// Faithful to the reference spec, re-skinned for DeepSeek:
-//  Phase 1: radial symmetric spread (8-fold snowflake) + edge decorators
-//  Phase 2: discrete removal, keeping 3 anchor blocks (upper-left quadrant)
-//  Phase 3: directional spread (bias to +X/+Y) that finally assembles the whale
-// Every block is a rounded square at integer grid coords with a random alpha.
+// ===== Hero Canvas — The whale grows itself, layer by layer =====
+// A big whale silhouette assembled from hundreds of little whale icons.
+// A growth front starts at the whale's heart and radiates outward, lighting
+// one ring of cells at a time — a visible recursive build-up, then the whole
+// thing dissolves and starts over. The big whale is always recognizable
+// because every lit cell carries a tiny whale mark inside it.
 (function() {
   const canvas = document.getElementById('hero-canvas');
   const ctx = canvas.getContext('2d', { willReadFrequently: true });
   const hero = document.getElementById('hero');
 
-  // Official DeepSeek whale mark path (drawn inside final-phase blocks)
+  // Official DeepSeek whale mark path (drawn inside each lit cell)
   const WHALE_D = '__WHALE_PATH__';
   // Big-whale silhouette mask (60x45 grid): [[x,y],...]
   const WC = __WHALE_CELLS__;
   const WX = __WHALE_W__, WY = __WHALE_H__;
 
-  // ---- Grid parameters (aligned to integer coords, discrete, no subpixel) ----
-  const CS = 22;            // block size (px)
-  const GAP = 6;            // gap between blocks
+  // ---- Grid parameters ----
+  const CS = 24;             // cell size (px)
+  const GAP = 5;             // gap between cells
   const PITCH = CS + GAP;
-  const RADIUS = CS * 0.16; // rounded corners ~16% of side
+  const RADIUS = CS * 0.18;  // rounded corners
 
   let w, h, cols, rows;
   let mx = -999, my = -999, tmx = -999, tmy = -999;
 
-  // ---- Theme colors ----
+  // ---- Theme ----
   let C_BLOCK = '#4d6bfe';
-  let C_BLOCK_BRIGHT = '#3964fe';
-  let C_BLOCK_DIM = '#9db5ff';
   function readThemeColors() {
     const cs = getComputedStyle(document.documentElement);
     C_BLOCK = cs.getPropertyValue('--accent').trim() || '#4d6bfe';
   }
 
-  // ---- State ----
-  // grid[x][y] = { a: alpha } or undefined
-  let grid = {};
-  // whale anchor coords (phase 3 target silhouette, in grid coords)
-  let whaleCells = [];     // [{gx,gy}] whale silhouette cells
-  let whaleSet = {};       // "gx,gy" -> true
-  let phase = 0;           // 0=idle, 1=radial, 2=clear, 3=directional
-  let time = 0;            // seconds since start
-  const PHASE1_END = 12;
-  const PHASE2_END = 15;
-  // decorators: {x,y,type,ttl,born} rendered as brief edge sparks
-  let decorators = [];
-  let holdAt = null;
+  // ---- Whale data (built in resize) ----
+  let whaleCells = [];   // [{gx,gy,dist}] all cells of the big silhouette
+  let whaleOrder = [];   // whaleCells sorted by distance from center
+  let whaleSet = {};     // "gx,gy" -> true
+  let cx = 0, cy = 0;    // whale center (grid coords)
 
-  // center of the whole animation in grid coords
-  let cx = 0, cy = 0;
-  // whale silhouette top-left corner (grid coords) — used by phase 2 & 3
-  let ox = 0, oy = 0;
+  // ---- Animation state ----
+  // each lit cell: { a: alpha, pulse } ; lighting driven by a growing radius
+  let cells = {};        // "gx,gy" -> {a, phase}
+  let front = 0;         // current growth-front radius (in cells)
+  let frontMax = 1;
+  let cycleT = 0;
+  let lastTick = 0;
 
   function resize() {
     const r = hero.getBoundingClientRect();
@@ -594,276 +587,121 @@ body {
     canvas.width = w * dpr; canvas.height = h * dpr;
     canvas.style.width = w + 'px'; canvas.style.height = h + 'px';
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    cols = Math.floor(w / PITCH);
-    rows = Math.floor(h / PITCH);
+    cols = Math.max(10, Math.floor(w / PITCH));
+    rows = Math.max(8, Math.floor(h / PITCH));
 
-    // center of the stage: slightly right-of-center on desktop, center on mobile
-    if (w < 768) {
-      cx = Math.floor(cols / 2);
-      cy = Math.floor(rows * 0.52);
-    } else {
-      cx = Math.floor(cols * 0.62);
-      cy = Math.floor(rows * 0.52);
-    }
-
-    // Build whale silhouette (scaled to ~70% of viewport height)
-    const targetH = Math.floor(h * 0.70 / PITCH);
-    const scale = Math.max(10, Math.min(WY, targetH)) / WY;
+    // Whale scaled to ~78% of viewport height; centered right-of-center
+    // on desktop, bottom-center on mobile.
+    const targetH = Math.floor(h * 0.78 / PITCH);
+    const scale = Math.max(6, Math.min(WY, targetH)) / WY;
     const wW = Math.round(WX * scale), wH = Math.round(WY * scale);
-    const wmask = {};
-    WC.forEach(function(c) { wmask[c[1] * WX + c[0]] = true; });
-    // Whale sits right-of-center (desktop) / bottom-center (mobile), its top-left
-    // corner anchors the phase-3 directional growth.
+    let ox, oy;
     if (w < 768) {
       ox = Math.floor((cols - wW) / 2);
       oy = Math.floor(rows * 0.5) - Math.floor(wH * 0.5);
     } else {
-      ox = Math.floor(cols * 0.5) - Math.floor(wW * 0.25);
-      oy = Math.floor(rows * 0.5) - Math.floor(wH * 0.5);
+      ox = Math.floor(cols * 0.5) - Math.floor(wW * 0.5);
+      oy = Math.floor((rows - wH) / 2);
     }
-    // keep whale fully in-bounds
-    if (ox + wW >= cols) ox = cols - wW - 1;
-    if (oy + wH >= rows) oy = rows - wH - 1;
+    // hard bounds so nothing ever leaves the canvas
+    if (ox + wW > cols) ox = cols - wW;
+    if (oy + wH > rows) oy = rows - wH;
     if (ox < 0) ox = 0;
     if (oy < 0) oy = 0;
+    cx = ox + Math.floor(wW / 2);
+    cy = oy + Math.floor(wH / 2);
+
+    const wmask = {};
+    WC.forEach(function(c) { wmask[c[1] * WX + c[0]] = true; });
     whaleCells = [];
     whaleSet = {};
     for (let gy = 0; gy < wH; gy++)
       for (let gx = 0; gx < wW; gx++) {
         const sx = Math.floor(gx * WX / wW), sy = Math.floor(gy * WY / wH);
         if (!wmask[sy * WX + sx]) continue;
-        whaleCells.push({ gx: gx + ox, gy: gy + oy });
-        whaleSet[(gx + ox) + ',' + (gy + oy)] = true;
+        const ax = gx + ox, ay = gy + oy;
+        whaleCells.push({ gx: ax, gy: ay, dist: Math.hypot(ax - cx, ay - cy) });
+        whaleSet[ax + ',' + ay] = true;
       }
+    whaleOrder = whaleCells.slice().sort(function(a, b) { return a.dist - b.dist; });
+    frontMax = whaleOrder.length ? whaleOrder[whaleOrder.length - 1].dist : 1;
 
-    resetAnimation();
-  }
-
-  function resetAnimation() {
-    grid = {};
-    decorators = [];
-    time = 0;
-    phase = 0;
-    // ---- Phase 1 initial seed: inverted-L cluster of 5 blocks, near center ----
-    const s = [
-      [cx, cy], [cx+1, cy], [cx+2, cy],   // 3 horizontal
-      [cx+1, cy-1], [cx+1, cy-2],          // 2 upward
-    ];
-    s.forEach(function(p) {
-      grid[p[0] + ',' + p[1]] = { a: pickAlpha() };
-    });
-    // seed decorators near the cluster
-    decorators.push(makeDecorator(cx+3, cy+1, 'flower'));
-    decorators.push(makeDecorator(cx-1, cy-2, 'asterisk'));
+    cells = {};
+    front = 0;
+    cycleT = 0;
   }
 
   function pickAlpha() {
-    const opts = [0.3, 0.5, 0.7, 1.0];
+    const opts = [0.55, 0.7, 0.85, 1.0];
     return opts[Math.floor(Math.random() * opts.length)];
   }
 
-  function makeDecorator(gx, gy, type) {
-    return { x: gx, y: gy, type: type, born: time, ttl: 0.2 + Math.random() * 0.3 };
-  }
-
-  // ---- Phase 1: radial symmetric BFS spread (8 directions, diagonals longer) ----
-  // directions with diagonal bias: orthogonal step 1, diagonal step ~1.5
-  const DIRS = [
-    [1,0],[0,1],[-1,0],[0,-1],           // orthogonal
-    [1,1],[1,-1],[-1,1],[-1,-1]           // diagonal
-  ];
-  function radialTick() {
-    // collect frontier: active cells that have empty Moore neighbors
-    const frontier = [];
-    for (const key in grid) {
-      const [x, y] = key.split(',').map(Number);
-      for (const [dx, dy] of DIRS) {
-        const nx = x + dx, ny = y + dy;
-        if (nx >= 0 && nx < cols && ny >= 0 && ny < rows && !grid[nx + ',' + ny]) {
-          frontier.push([nx, ny, dx, dy]); break;
-        }
-      }
-    }
-    // Sparse, deliberate growth: a fixed small budget per tick so the
-    // snowflake spreads as an open 8-armed structure, not a filled disc.
-    const budget = 4;
-    let added = 0;
-    // sort by distance from center so expansion is roughly radial
-    frontier.sort(function(a, b) {
-      const da = Math.abs(a[0] - cx) + Math.abs(a[1] - cy);
-      const db = Math.abs(b[0] - cx) + Math.abs(b[1] - cy);
-      return da - db;
-    });
-    for (const [nx, ny, dx, dy] of frontier) {
-      if (added >= budget) break;
-      if (grid[nx + ',' + ny]) continue;
-      // diagonal directions get much higher probability -> long sparse arms
-      const diag = dx !== 0 && dy !== 0;
-      const prob = diag ? 0.85 : 0.22;
-      if (Math.random() < prob) {
-        grid[nx + ',' + ny] = { a: pickAlpha() };
-        added++;
-        // occasional decorator at the active edge
-        if (Math.random() < 0.06) {
-          decorators.push(makeDecorator(nx + dx, ny + dy, pickDecoratorType()));
-        }
-      }
-    }
-  }
-
-  function pickDecoratorType() {
-    const r = Math.random();
-    return r < 0.4 ? 'asterisk' : r < 0.8 ? 'plus' : 'flower';
-  }
-
-  // ---- Phase 2: discrete removal, keep 3 anchor blocks at the whale's
-  // upper-left corner so phase 3 grows right/down into the whale. ----
-  function clearTick() {
-    // aggressively remove blocks, keeping only the 3 corner anchors
-    for (const key in grid) {
-      const [x, y] = key.split(',').map(Number);
-      const isAnchor = (x === ox && y === oy) || (x === ox + 1 && y === oy) || (x === ox && y === oy + 1);
-      if (isAnchor) continue;
-      // remove quickly (discrete, per-block)
-      if (Math.random() < 0.7) {
-        delete grid[key];
-      }
-    }
-    // force the 3 anchors to exist
-    const corner = [[ox, oy], [ox+1, oy], [ox, oy+1]];
-    corner.forEach(function(p) {
-      if (p[0] >= 0 && p[0] < cols && p[1] >= 0 && p[1] < rows) {
-        grid[p[0] + ',' + p[1]] = { a: 0.9 };
-      }
-    });
-    // once sparse enough, move on
-    if (Object.keys(grid).length <= 8) phase = 3;
-  }
-
-  // ---- Phase 3: directional spread biased to +X/+Y, assembling the whale ----
-  const BIAS_DIRS = [[1,0],[0,1],[1,1]];
-  function directionalTick() {
-    // 1) spread from existing blocks toward the whale (right/down)
-    const frontier = [];
-    for (const key in grid) {
-      const [x, y] = key.split(',').map(Number);
-      for (const [dx, dy] of BIAS_DIRS) {
-        const nx = x + dx, ny = y + dy;
-        if (nx >= 0 && nx < cols && ny >= 0 && ny < rows && !grid[nx + ',' + ny]) {
-          frontier.push([nx, ny, dx, dy]); break;
-        }
-      }
-    }
-    const budget = 8;
-    let added = 0;
-    // prefer whale cells in the frontier (they grow the silhouette fast)
-    frontier.sort(function(a, b) {
-      const wa = whaleSet[a[0] + ',' + a[1]] ? 0 : 1;
-      const wb = whaleSet[b[0] + ',' + b[1]] ? 0 : 1;
-      return wa - wb;
-    });
-    for (const [nx, ny, dx, dy] of frontier) {
-      if (added >= budget) break;
-      if (grid[nx + ',' + ny]) continue;
-      const onWhale = !!whaleSet[nx + ',' + ny];
-      const prob = onWhale ? 0.95 : 0.25;
-      if (Math.random() < prob) {
-        grid[nx + ',' + ny] = { a: onWhale ? 0.9 : pickAlpha(), whale: onWhale };
-        added++;
-        if (onWhale && Math.random() < 0.05) {
-          decorators.push(makeDecorator(nx + dx, ny + dy, pickDecoratorType()));
-        }
-      }
-    }
-    // 2) fast fill: pull every whale cell in rapidly (fills silhouette ~5s)
-    for (let i = 0; i < whaleCells.length; i++) {
-      const c = whaleCells[i];
-      if (!grid[c.gx + ',' + c.gy]) {
-        if (Math.random() < 0.10) {
-          grid[c.gx + ',' + c.gy] = { a: 0.9, whale: true };
-        }
-      }
-    }
-    // once the whale is fully assembled, linger; reset to loop
-    let whaleFilled = 0;
-    for (let i = 0; i < whaleCells.length; i++) {
-      if (grid[whaleCells[i].gx + ',' + whaleCells[i].gy]) whaleFilled++;
-    }
-    if (whaleFilled >= whaleCells.length * 0.9) {
-      // brief hold then loop
-      if (holdAt === null) holdAt = time;
-      else if (time - holdAt > 6) { holdAt = null; resetAnimation(); }
-    }
-  }
-
   function step() {
-    time += 0.1;
-    // advance decorators
-    decorators = decorators.filter(function(d) { return time - d.born < d.ttl; });
-
-    if (phase === 0) {
-      phase = 1;
-    } else if (phase === 1) {
-      radialTick();
-      if (time > PHASE1_END) { phase = 2; }
-    } else if (phase === 2) {
-      clearTick();
-    } else if (phase === 3) {
-      directionalTick();
+    cycleT += 0.1;
+    // grow the front outward
+    front += 0.35;
+    if (front > frontMax) {
+      // brief hold of the full whale, then dissolve and restart
+      if (cycleT > frontMax / 0.35 + 6) {
+        front = 0;
+        cycleT = 0;
+        cells = {};
+      }
+    }
+    // light cells whose distance <= front, and fade ones behind
+    for (let i = 0; i < whaleOrder.length; i++) {
+      const c = whaleOrder[i];
+      const key = c.gx + ',' + c.gy;
+      const target = c.dist <= front ? 1 : 0;
+      if (target === 1) {
+        if (!cells[key]) cells[key] = { a: pickAlpha(), phase: Math.random() * 6.28 };
+      } else if (cells[key]) {
+        // fade out cells behind the front
+        cells[key].a -= 0.06;
+        if (cells[key].a <= 0.02) delete cells[key];
+      }
     }
   }
 
-  // ---- Rendering ----
-  function drawBlock(gx, gy, alpha, isWhale) {
+  function drawCell(gx, gy, cell) {
     const px = gx * PITCH, py = gy * PITCH;
-    ctx.globalAlpha = alpha;
-    if (isWhale) {
-      // final whale blocks draw the little whale mark inside
-      ctx.save();
-      ctx.translate(px + CS / 2, py + CS / 2);
-      ctx.scale(0.6, 0.6);
-      ctx.fillStyle = C_BLOCK;
-      ctx.beginPath();
-      ctx.fill(new Path2D(WHALE_D));
-      ctx.restore();
-    } else {
-      ctx.fillStyle = C_BLOCK;
-      roundRect(px + 1, py + 1, CS - 1, CS - 1, RADIUS);
-    }
+    const t = performance.now() / 1000;
+    const pulse = 0.9 + 0.1 * Math.sin(t * 2 + cell.phase);
+    ctx.globalAlpha = cell.a * pulse;
+    // whale mark fills the cell (recursive nesting)
+    ctx.save();
+    ctx.translate(px + CS / 2, py + CS / 2);
+    ctx.scale(0.85, 0.85);
+    ctx.fillStyle = C_BLOCK;
+    ctx.beginPath();
+    ctx.fill(new Path2D(WHALE_D));
+    ctx.restore();
     ctx.globalAlpha = 1;
   }
 
-  function drawDecorator(d) {
-    const px = d.x * PITCH + CS / 2, py = d.y * PITCH + CS / 2;
-    const s = CS; // base size
-    ctx.strokeStyle = C_BLOCK;
-    ctx.lineWidth = 1.5;
-    const a = Math.max(0, 1 - (time - d.born) / d.ttl);
-    ctx.globalAlpha = a * 0.8;
-    if (d.type === 'asterisk') {
-      // 8-spoke star
-      for (let i = 0; i < 8; i++) {
-        const ang = i * Math.PI / 4;
-        ctx.beginPath();
-        ctx.moveTo(px, py);
-        ctx.lineTo(px + Math.cos(ang) * s * 0.35, py + Math.sin(ang) * s * 0.35);
-        ctx.stroke();
+  function draw() {
+    ctx.clearRect(0, 0, w, h);
+    mx += (tmx - mx) * 0.06; my += (tmy - my) * 0.06;
+
+    // faint resting grid so the canvas never looks empty
+    ctx.fillStyle = 'rgba(225,229,238,0.4)';
+    for (let gy = 0; gy < rows; gy++)
+      for (let gx = 0; gx < cols; gx++) {
+        roundRect(gx * PITCH + 1, gy * PITCH + 1, CS - 1, CS - 1, RADIUS);
       }
-    } else if (d.type === 'plus') {
-      ctx.beginPath();
-      ctx.moveTo(px - s * 0.22, py); ctx.lineTo(px + s * 0.22, py);
-      ctx.moveTo(px, py - s * 0.22); ctx.lineTo(px, py + s * 0.22);
-      ctx.stroke();
-    } else {
-      // flower: 8 petals
-      for (let i = 0; i < 8; i++) {
-        const ang = i * Math.PI / 4;
-        ctx.beginPath();
-        ctx.arc(px + Math.cos(ang) * s * 0.3, py + Math.sin(ang) * s * 0.3, s * 0.08, 0, Math.PI * 2);
-        ctx.fill();
-      }
+
+    // lit whale cells
+    for (const key in cells) {
+      const [gx, gy] = key.split(',').map(Number);
+      drawCell(gx, gy, cells[key]);
     }
-    ctx.globalAlpha = 1;
+
+    // growth-front ring
+    ctx.strokeStyle = 'rgba(77,107,254,0.25)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(cx * PITCH + CS / 2, cy * PITCH + CS / 2, front * PITCH, 0, Math.PI * 2);
+    ctx.stroke();
   }
 
   function roundRect(x, y, ww, hh, r) {
@@ -878,27 +716,11 @@ body {
     ctx.fill();
   }
 
-  function draw() {
-    ctx.clearRect(0, 0, w, h);
-    mx += (tmx - mx) * 0.06; my += (tmy - my) * 0.06;
-
-    // main blocks
-    for (const key in grid) {
-      const [x, y] = key.split(',').map(Number);
-      const cell = grid[key];
-      drawBlock(x, y, cell.a, !!cell.whale);
-    }
-    // decorators on top
-    for (let i = 0; i < decorators.length; i++) drawDecorator(decorators[i]);
-
-    // phase label hint (optional, subtle) — skip for now
-  }
-
   function loop() {
-    // logic ticks ~10x/sec, draw at full framerate
-    if (Math.floor(performance.now() / 100) !== Math.floor((performance.now() - 100) / 100)) {
-      step();
-    }
+    const rNow = hero.getBoundingClientRect();
+    if (Math.abs(rNow.width - w) > 2 || Math.abs(rNow.height - h) > 2) resize();
+    const now = performance.now();
+    if (now - lastTick >= 100) { lastTick = now; step(); }
     draw();
     requestAnimationFrame(loop);
   }
