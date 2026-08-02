@@ -594,47 +594,59 @@ body {
 </footer>
 
 <script>
-// ===== Hero Canvas — Recursive whale-of-whales: little whale icons radiate
-// outward in waves, each assembling the big whale silhouette, over and over. =====
+// ===== Hero Canvas — Three-phase recursive grid animation =====
+// Faithful to the reference spec, re-skinned for DeepSeek:
+//  Phase 1: radial symmetric spread (8-fold snowflake) + edge decorators
+//  Phase 2: discrete removal, keeping 3 anchor blocks (upper-left quadrant)
+//  Phase 3: directional spread (bias to +X/+Y) that finally assembles the whale
+// Every block is a rounded square at integer grid coords with a random alpha.
 (function() {
   const canvas = document.getElementById('hero-canvas');
   const ctx = canvas.getContext('2d', { willReadFrequently: true });
   const hero = document.getElementById('hero');
 
-  // Official DeepSeek whale mark path (drawn inside each grid cell)
+  // Official DeepSeek whale mark path (drawn inside final-phase blocks)
   const WHALE_D = 'M26.5174 3.39471C26.235 3.2567 26.1137 3.52006 25.9487 3.65346C25.8923 3.69659 25.8446 3.75294 25.7969 3.80469C25.3846 4.24516 24.9027 4.53439 24.2737 4.49989C23.3536 4.44814 22.5682 4.73737 21.8735 5.44119C21.7258 4.57349 21.2353 4.0554 20.4889 3.72304C20.0985 3.55054 19.7034 3.37746 19.4297 3.00197C19.2388 2.73459 19.1865 2.43673 19.091 2.14289C19.0301 1.96579 18.9697 1.78466 18.7656 1.75418C18.5442 1.71968 18.4574 1.90541 18.3705 2.06067C18.0232 2.69549 17.8887 3.39471 17.9019 4.10313C17.9324 5.6965 18.6051 6.96556 19.9421 7.86834C20.0939 7.97184 20.133 8.07535 20.0852 8.22658C19.9938 8.53766 19.8857 8.83955 19.7903 9.15063C19.7293 9.34901 19.6384 9.39271 19.4257 9.30588C18.692 8.9994 18.0583 8.54571 17.4982 7.99772C16.5477 7.07827 15.6881 6.06336 14.6162 5.26869C14.3644 5.08296 14.1125 4.91045 13.8521 4.746C12.7584 3.68394 13.9952 2.81164 14.2816 2.70814C14.5812 2.60003 14.3857 2.22857 13.4179 2.23317C12.4502 2.2372 11.5646 2.56151 10.4359 2.99335C10.2708 3.05832 10.0972 3.10547 9.91951 3.14457C8.8954 2.95022 7.83162 2.90709 6.72069 3.03245C4.62877 3.26533 2.95777 4.25436 1.72954 5.94261C0.254043 7.97184 -0.0932678 10.2777 0.33167 12.6824C0.778458 15.2171 2.07225 17.3153 4.06008 18.9558C6.12152 20.6567 8.49577 21.4905 11.2047 21.3306C12.8498 21.2358 14.6812 21.0155 16.7473 19.2669C17.2682 19.5262 17.8151 19.6297 18.7219 19.7074C19.4205 19.7723 20.0933 19.6729 20.6143 19.5648C21.4302 19.3923 21.3739 18.6367 21.0789 18.4981C18.6874 17.3843 19.2124 17.8374 18.7351 17.4706C19.9501 16.033 21.8063 13.4776 22.379 9.99821C22.4353 9.61409 22.5072 9.073 22.4986 8.76192C22.494 8.57216 22.5377 8.49856 22.7545 8.47671C23.3536 8.40771 23.935 8.24383 24.4692 7.94999C26.0188 7.10357 26.6439 5.71318 26.7911 4.04678C26.8129 3.79204 26.7865 3.52869 26.5174 3.39471ZM13.0143 18.3946C10.6964 16.5724 9.5722 15.9726 9.10816 15.9985C8.67402 16.0244 8.75222 16.5212 8.84768 16.8449C8.94773 17.1646 9.07768 17.3849 9.25996 17.6655C9.38589 17.8512 9.47272 18.1272 9.13404 18.3348C8.38766 18.7965 7.08985 18.1796 7.0289 18.1491C5.51833 17.2595 4.25559 16.0853 3.36546 14.4793C2.50581 12.9337 2.0067 11.2753 1.92447 9.50542C1.90262 9.07818 2.02855 8.92695 2.45406 8.84932C3.01413 8.74582 3.59144 8.72397 4.15093 8.80619C6.51656 9.15178 8.53027 10.2092 10.2185 11.8848C11.1822 12.8388 11.9114 13.979 12.6623 15.0929C13.461 16.2757 14.3201 17.4027 15.4144 18.3268C15.8008 18.6505 16.109 18.8966 16.404 19.0783C15.5144 19.1778 14.0297 19.1991 13.0143 18.3958V18.3946ZM14.1252 11.2489C14.1252 11.0591 14.277 10.9079 14.4679 10.9079C14.511 10.9079 14.5501 10.9165 14.5852 10.9292C14.6329 10.9464 14.6766 10.9723 14.7111 11.0114C14.7721 11.0718 14.8066 11.158 14.8066 11.2489C14.8066 11.4386 14.6548 11.5899 14.4639 11.5899C14.273 11.5899 14.1252 11.4386 14.1252 11.2489ZM17.5759 13.0188C17.3545 13.1096 17.1331 13.1873 16.9203 13.1959C16.5903 13.2131 16.2303 13.0791 16.0348 12.9153C15.7312 12.6605 15.5139 12.5179 15.423 12.0734C15.3839 11.8837 15.4057 11.5899 15.4402 11.4214C15.5185 11.0585 15.4316 10.8257 15.1757 10.614C14.9676 10.4415 14.7025 10.3938 14.4115 10.3938C14.3029 10.3938 14.2034 10.3461 14.1292 10.3076C14.0079 10.2472 13.9078 10.096 14.0033 9.91023C14.0338 9.84985 14.1815 9.70322 14.216 9.67734C14.6111 9.45251 15.0665 9.52612 15.488 9.6946C15.8784 9.85445 16.174 10.1477 16.5989 10.5623C17.033 11.0631 17.1112 11.2011 17.3585 11.5772C17.554 11.871 17.7317 12.1729 17.8536 12.5185C17.9272 12.7341 17.8317 12.9107 17.5759 13.0188Z';
   // Big-whale silhouette mask (60x45 grid): [[x,y],...]
   const WC = [[39, 7], [40, 7], [25, 8], [26, 8], [27, 8], [28, 8], [29, 8], [30, 8], [39, 8], [40, 8], [14, 9], [15, 9], [16, 9], [17, 9], [18, 9], [19, 9], [20, 9], [21, 9], [22, 9], [23, 9], [24, 9], [25, 9], [26, 9], [27, 9], [28, 9], [29, 9], [39, 9], [40, 9], [41, 9], [12, 10], [13, 10], [14, 10], [15, 10], [16, 10], [17, 10], [18, 10], [19, 10], [20, 10], [21, 10], [22, 10], [23, 10], [24, 10], [25, 10], [26, 10], [27, 10], [28, 10], [29, 10], [39, 10], [40, 10], [41, 10], [42, 10], [43, 10], [54, 10], [55, 10], [10, 11], [11, 11], [12, 11], [13, 11], [14, 11], [15, 11], [16, 11], [17, 11], [18, 11], [19, 11], [20, 11], [21, 11], [22, 11], [23, 11], [24, 11], [25, 11], [26, 11], [27, 11], [28, 11], [29, 11], [39, 11], [40, 11], [41, 11], [42, 11], [43, 11], [44, 11], [52, 11], [53, 11], [54, 11], [55, 11], [9, 12], [10, 12], [11, 12], [12, 12], [13, 12], [14, 12], [15, 12], [16, 12], [17, 12], [18, 12], [19, 12], [20, 12], [21, 12], [22, 12], [23, 12], [24, 12], [25, 12], [26, 12], [27, 12], [28, 12], [29, 12], [30, 12], [39, 12], [40, 12], [41, 12], [42, 12], [43, 12], [44, 12], [45, 12], [48, 12], [49, 12], [50, 12], [51, 12], [52, 12], [53, 12], [54, 12], [55, 12], [8, 13], [9, 13], [10, 13], [11, 13], [12, 13], [13, 13], [14, 13], [15, 13], [16, 13], [17, 13], [18, 13], [19, 13], [20, 13], [21, 13], [22, 13], [23, 13], [24, 13], [25, 13], [26, 13], [27, 13], [28, 13], [29, 13], [30, 13], [31, 13], [32, 13], [39, 13], [40, 13], [41, 13], [42, 13], [43, 13], [44, 13], [45, 13], [46, 13], [47, 13], [48, 13], [49, 13], [50, 13], [51, 13], [52, 13], [53, 13], [54, 13], [7, 14], [8, 14], [9, 14], [10, 14], [11, 14], [12, 14], [13, 14], [14, 14], [15, 14], [16, 14], [17, 14], [18, 14], [19, 14], [20, 14], [21, 14], [22, 14], [23, 14], [24, 14], [25, 14], [26, 14], [27, 14], [28, 14], [29, 14], [30, 14], [31, 14], [32, 14], [33, 14], [39, 14], [40, 14], [41, 14], [42, 14], [43, 14], [44, 14], [45, 14], [46, 14], [47, 14], [48, 14], [49, 14], [50, 14], [51, 14], [52, 14], [53, 14], [54, 14], [6, 15], [7, 15], [8, 15], [9, 15], [10, 15], [11, 15], [12, 15], [13, 15], [14, 15], [15, 15], [16, 15], [17, 15], [18, 15], [19, 15], [20, 15], [21, 15], [22, 15], [23, 15], [24, 15], [25, 15], [26, 15], [27, 15], [28, 15], [29, 15], [30, 15], [31, 15], [32, 15], [33, 15], [34, 15], [40, 15], [41, 15], [42, 15], [43, 15], [44, 15], [45, 15], [46, 15], [47, 15], [48, 15], [49, 15], [50, 15], [51, 15], [52, 15], [53, 15], [5, 16], [6, 16], [7, 16], [8, 16], [9, 16], [10, 16], [11, 16], [12, 16], [13, 16], [14, 16], [15, 16], [16, 16], [17, 16], [18, 16], [19, 16], [20, 16], [21, 16], [22, 16], [23, 16], [24, 16], [25, 16], [26, 16], [27, 16], [28, 16], [29, 16], [30, 16], [31, 16], [32, 16], [33, 16], [34, 16], [35, 16], [41, 16], [42, 16], [43, 16], [44, 16], [45, 16], [46, 16], [47, 16], [48, 16], [49, 16], [50, 16], [51, 16], [52, 16], [5, 17], [6, 17], [7, 17], [8, 17], [9, 17], [10, 17], [11, 17], [12, 17], [13, 17], [14, 17], [15, 17], [16, 17], [17, 17], [18, 17], [19, 17], [20, 17], [21, 17], [22, 17], [23, 17], [24, 17], [25, 17], [26, 17], [27, 17], [28, 17], [29, 17], [30, 17], [31, 17], [32, 17], [33, 17], [34, 17], [35, 17], [36, 17], [42, 17], [43, 17], [44, 17], [45, 17], [46, 17], [47, 17], [48, 17], [49, 17], [50, 17], [51, 17], [5, 18], [6, 18], [7, 18], [8, 18], [9, 18], [10, 18], [11, 18], [12, 18], [13, 18], [14, 18], [15, 18], [16, 18], [17, 18], [18, 18], [19, 18], [20, 18], [21, 18], [22, 18], [23, 18], [24, 18], [25, 18], [26, 18], [27, 18], [28, 18], [29, 18], [30, 18], [31, 18], [32, 18], [33, 18], [34, 18], [35, 18], [36, 18], [37, 18], [42, 18], [43, 18], [44, 18], [45, 18], [46, 18], [47, 18], [48, 18], [49, 18], [4, 19], [5, 19], [6, 19], [7, 19], [8, 19], [12, 19], [13, 19], [14, 19], [15, 19], [16, 19], [17, 19], [18, 19], [19, 19], [20, 19], [21, 19], [22, 19], [23, 19], [24, 19], [25, 19], [26, 19], [27, 19], [28, 19], [29, 19], [30, 19], [31, 19], [32, 19], [33, 19], [34, 19], [35, 19], [36, 19], [37, 19], [38, 19], [39, 19], [41, 19], [42, 19], [43, 19], [44, 19], [45, 19], [46, 19], [47, 19], [4, 20], [5, 20], [6, 20], [7, 20], [16, 20], [17, 20], [18, 20], [19, 20], [20, 20], [21, 20], [22, 20], [23, 20], [24, 20], [25, 20], [26, 20], [27, 20], [28, 20], [29, 20], [30, 20], [31, 20], [32, 20], [33, 20], [34, 20], [35, 20], [36, 20], [37, 20], [38, 20], [39, 20], [40, 20], [41, 20], [42, 20], [43, 20], [44, 20], [45, 20], [46, 20], [4, 21], [5, 21], [6, 21], [7, 21], [18, 21], [19, 21], [20, 21], [21, 21], [22, 21], [23, 21], [24, 21], [25, 21], [26, 21], [27, 21], [28, 21], [29, 21], [30, 21], [31, 21], [32, 21], [33, 21], [35, 21], [36, 21], [37, 21], [38, 21], [39, 21], [40, 21], [41, 21], [42, 21], [43, 21], [44, 21], [45, 21], [46, 21], [4, 22], [5, 22], [6, 22], [7, 22], [20, 22], [21, 22], [22, 22], [23, 22], [24, 22], [25, 22], [26, 22], [27, 22], [28, 22], [29, 22], [30, 22], [31, 22], [32, 22], [36, 22], [37, 22], [38, 22], [39, 22], [40, 22], [41, 22], [42, 22], [43, 22], [44, 22], [45, 22], [46, 22], [4, 23], [5, 23], [6, 23], [7, 23], [22, 23], [23, 23], [24, 23], [25, 23], [26, 23], [27, 23], [28, 23], [29, 23], [30, 23], [31, 23], [32, 23], [33, 23], [37, 23], [38, 23], [39, 23], [40, 23], [41, 23], [42, 23], [43, 23], [44, 23], [45, 23], [46, 23], [4, 24], [5, 24], [6, 24], [7, 24], [23, 24], [24, 24], [25, 24], [26, 24], [27, 24], [28, 24], [29, 24], [30, 24], [31, 24], [32, 24], [33, 24], [38, 24], [39, 24], [40, 24], [41, 24], [42, 24], [43, 24], [44, 24], [45, 24], [46, 24], [4, 25], [5, 25], [6, 25], [7, 25], [24, 25], [25, 25], [26, 25], [27, 25], [28, 25], [29, 25], [30, 25], [31, 25], [32, 25], [33, 25], [38, 25], [39, 25], [40, 25], [41, 25], [42, 25], [43, 25], [44, 25], [45, 25], [4, 26], [5, 26], [6, 26], [7, 26], [8, 26], [25, 26], [26, 26], [27, 26], [28, 26], [29, 26], [30, 26], [31, 26], [32, 26], [33, 26], [34, 26], [37, 26], [38, 26], [39, 26], [40, 26], [41, 26], [42, 26], [43, 26], [44, 26], [45, 26], [4, 27], [5, 27], [6, 27], [7, 27], [8, 27], [26, 27], [27, 27], [28, 27], [29, 27], [30, 27], [31, 27], [32, 27], [33, 27], [34, 27], [35, 27], [36, 27], [37, 27], [38, 27], [39, 27], [40, 27], [41, 27], [42, 27], [43, 27], [44, 27], [5, 28], [6, 28], [7, 28], [8, 28], [9, 28], [27, 28], [28, 28], [29, 28], [30, 28], [31, 28], [32, 28], [33, 28], [34, 28], [35, 28], [36, 28], [37, 28], [38, 28], [39, 28], [40, 28], [41, 28], [42, 28], [43, 28], [44, 28], [5, 29], [6, 29], [7, 29], [8, 29], [9, 29], [27, 29], [28, 29], [29, 29], [30, 29], [31, 29], [32, 29], [33, 29], [34, 29], [35, 29], [36, 29], [37, 29], [38, 29], [39, 29], [40, 29], [41, 29], [42, 29], [43, 29], [6, 30], [7, 30], [8, 30], [9, 30], [10, 30], [28, 30], [29, 30], [30, 30], [31, 30], [32, 30], [33, 30], [34, 30], [35, 30], [36, 30], [37, 30], [38, 30], [39, 30], [40, 30], [41, 30], [42, 30], [43, 30], [6, 31], [7, 31], [8, 31], [9, 31], [10, 31], [11, 31], [29, 31], [30, 31], [31, 31], [32, 31], [33, 31], [34, 31], [35, 31], [36, 31], [37, 31], [38, 31], [39, 31], [40, 31], [41, 31], [42, 31], [7, 32], [8, 32], [9, 32], [10, 32], [11, 32], [21, 32], [30, 32], [31, 32], [32, 32], [33, 32], [34, 32], [35, 32], [36, 32], [37, 32], [38, 32], [39, 32], [40, 32], [41, 32], [7, 33], [8, 33], [9, 33], [10, 33], [11, 33], [12, 33], [21, 33], [22, 33], [23, 33], [31, 33], [32, 33], [33, 33], [34, 33], [35, 33], [36, 33], [37, 33], [38, 33], [39, 33], [40, 33], [41, 33], [8, 34], [9, 34], [10, 34], [11, 34], [12, 34], [13, 34], [14, 34], [21, 34], [22, 34], [23, 34], [24, 34], [25, 34], [31, 34], [32, 34], [33, 34], [34, 34], [35, 34], [36, 34], [37, 34], [38, 34], [39, 34], [40, 34], [41, 34], [9, 35], [10, 35], [11, 35], [12, 35], [13, 35], [14, 35], [15, 35], [21, 35], [22, 35], [23, 35], [24, 35], [25, 35], [26, 35], [32, 35], [33, 35], [34, 35], [35, 35], [36, 35], [37, 35], [38, 35], [39, 35], [40, 35], [41, 35], [10, 36], [11, 36], [12, 36], [13, 36], [14, 36], [15, 36], [16, 36], [17, 36], [21, 36], [22, 36], [23, 36], [24, 36], [25, 36], [26, 36], [27, 36], [28, 36], [33, 36], [34, 36], [35, 36], [36, 36], [37, 36], [38, 36], [39, 36], [40, 36], [41, 36], [42, 36], [43, 36], [11, 37], [12, 37], [13, 37], [14, 37], [15, 37], [16, 37], [17, 37], [18, 37], [19, 37], [20, 37], [21, 37], [22, 37], [23, 37], [24, 37], [25, 37], [26, 37], [27, 37], [28, 37], [29, 37], [30, 37], [33, 37], [34, 37], [35, 37], [36, 37], [37, 37], [38, 37], [39, 37], [40, 37], [41, 37], [42, 37], [43, 37], [44, 37], [13, 38], [14, 38], [15, 38], [16, 38], [17, 38], [18, 38], [19, 38], [20, 38], [21, 38], [22, 38], [23, 38], [24, 38], [25, 38], [26, 38], [27, 38], [28, 38], [29, 38], [30, 38], [31, 38], [32, 38], [33, 38], [34, 38], [35, 38], [36, 38], [37, 38], [38, 38], [39, 38], [40, 38], [41, 38], [42, 38], [43, 38], [44, 38], [14, 39], [15, 39], [16, 39], [17, 39], [18, 39], [19, 39], [20, 39], [21, 39], [22, 39], [23, 39], [24, 39], [25, 39], [26, 39], [27, 39], [28, 39], [29, 39], [30, 39], [31, 39], [32, 39], [33, 39], [34, 39], [16, 40], [17, 40], [18, 40], [19, 40], [20, 40], [21, 40], [22, 40], [23, 40], [24, 40], [25, 40], [26, 40], [27, 40], [28, 40], [29, 40], [30, 40], [31, 40], [32, 40]];
   const WX = 60, WY = 45;
 
-  const CELL = 16;            // cell size (px) — one little whale per cell
-  const GAP = 3;              // gap between cells
-  const PITCH = CELL + GAP;
+  // ---- Grid parameters (aligned to integer coords, discrete, no subpixel) ----
+  const CS = 22;            // block size (px)
+  const GAP = 6;            // gap between blocks
+  const PITCH = CS + GAP;
+  const RADIUS = CS * 0.16; // rounded corners ~16% of side
 
   let w, h, cols, rows;
-  let whaleCells = [];        // [{gx, gy, ox, oy, px, py, dist}] for the big whale
-  let ox = 0, oy = 0;         // big-whale origin (grid coords)
-  let centerGX = 0, centerGY = 0;
   let mx = -999, my = -999, tmx = -999, tmy = -999;
 
-  // Wave state: distance from center that is currently "lit", grows then resets
-  let waveD = 0;              // current wave radius (cells)
-  let WAVE_MAX = 26;          // max radius in cells (set in resize)
-  const WAVE_SPEED = 0.16;    // cells per tick (~10 ticks/s -> ~16s per wave)
-  const FADE = 0.012;         // trailing fade speed (slow -> silhouette lingers)
-
-  // Theme-aware colors (read from CSS custom props so dark mode works)
-  let C_GRID = 'rgba(237,243,254,0.6)';
-  let C_WHALE = '#4d6bfe';
-  let C_WAVE = 'rgba(77,107,254,0.35)';
+  // ---- Theme colors ----
+  let C_BLOCK = '#4d6bfe';
+  let C_BLOCK_BRIGHT = '#3964fe';
+  let C_BLOCK_DIM = '#9db5ff';
   function readThemeColors() {
     const cs = getComputedStyle(document.documentElement);
-    C_WHALE = cs.getPropertyValue('--accent').trim() || '#4d6bfe';
-    C_WAVE = 'rgba(107,135,255,0.35)';
-    // grid: accent-soft-ish translucent in light, faint blue-gray in dark
-    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-    C_GRID = isDark ? 'rgba(58,66,80,0.5)' : 'rgba(237,243,254,0.6)';
+    C_BLOCK = cs.getPropertyValue('--accent').trim() || '#4d6bfe';
   }
+
+  // ---- State ----
+  // grid[x][y] = { a: alpha } or undefined
+  let grid = {};
+  // whale anchor coords (phase 3 target silhouette, in grid coords)
+  let whaleCells = [];     // [{gx,gy}] whale silhouette cells
+  let whaleSet = {};       // "gx,gy" -> true
+  let phase = 0;           // 0=idle, 1=radial, 2=clear, 3=directional
+  let time = 0;            // seconds since start
+  const PHASE1_END = 12;
+  const PHASE2_END = 15;
+  // decorators: {x,y,type,ttl,born} rendered as brief edge sparks
+  let decorators = [];
+  let holdAt = null;
+
+  // center of the whole animation in grid coords
+  let cx = 0, cy = 0;
+  // whale silhouette top-left corner (grid coords) — used by phase 2 & 3
+  let ox = 0, oy = 0;
 
   function resize() {
     const r = hero.getBoundingClientRect();
@@ -643,113 +655,276 @@ body {
     canvas.width = w * dpr; canvas.height = h * dpr;
     canvas.style.width = w + 'px'; canvas.style.height = h + 'px';
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    cols = Math.floor(w / PITCH) + 2;
-    rows = Math.floor(h / PITCH) + 2;
+    cols = Math.floor(w / PITCH);
+    rows = Math.floor(h / PITCH);
 
-    // Scale the big whale to ~72% of viewport height so it reads as a logo
-    const targetH = Math.floor(h * 0.72 / PITCH);
+    // center of the stage: slightly right-of-center on desktop, center on mobile
+    if (w < 768) {
+      cx = Math.floor(cols / 2);
+      cy = Math.floor(rows * 0.52);
+    } else {
+      cx = Math.floor(cols * 0.62);
+      cy = Math.floor(rows * 0.52);
+    }
+
+    // Build whale silhouette (scaled to ~70% of viewport height)
+    const targetH = Math.floor(h * 0.70 / PITCH);
     const scale = Math.max(10, Math.min(WY, targetH)) / WY;
     const wW = Math.round(WX * scale), wH = Math.round(WY * scale);
-    let oxp, oyp;
-    if (w < 768) {
-      // mobile: whale centered, slightly lower (text sits above)
-      oxp = Math.floor((w - wW * PITCH) / 2 / PITCH);
-      oyp = Math.floor((h - wH * PITCH) / 2 / PITCH) + Math.floor(h * 0.18 / PITCH);
-    } else {
-      oxp = Math.floor((w - wW * PITCH - Math.max(70, w * 0.05)) / PITCH);
-      oyp = Math.floor((h - wH * PITCH) / 2 / PITCH);
-    }
-    ox = oxp; oy = oyp;
-    centerGX = ox + Math.floor(wW / 2);
-    centerGY = oy + Math.floor(wH / 2);
-    WAVE_MAX = Math.ceil(Math.sqrt(wW * wW + wH * wH) / 2) + 2;
-
-    // Build whale cell list with normalized distance from whale center
     const wmask = {};
     WC.forEach(function(c) { wmask[c[1] * WX + c[0]] = true; });
+    // Whale sits right-of-center (desktop) / bottom-center (mobile), its top-left
+    // corner anchors the phase-3 directional growth.
+    if (w < 768) {
+      ox = Math.floor((cols - wW) / 2);
+      oy = Math.floor(rows * 0.5) - Math.floor(wH * 0.5);
+    } else {
+      ox = Math.floor(cols * 0.5) - Math.floor(wW * 0.25);
+      oy = Math.floor(rows * 0.5) - Math.floor(wH * 0.5);
+    }
+    // keep whale fully in-bounds
+    if (ox + wW >= cols) ox = cols - wW - 1;
+    if (oy + wH >= rows) oy = rows - wH - 1;
+    if (ox < 0) ox = 0;
+    if (oy < 0) oy = 0;
     whaleCells = [];
+    whaleSet = {};
     for (let gy = 0; gy < wH; gy++)
       for (let gx = 0; gx < wW; gx++) {
         const sx = Math.floor(gx * WX / wW), sy = Math.floor(gy * WY / wH);
         if (!wmask[sy * WX + sx]) continue;
-        const absX = gx + oxp, absY = gy + oyp;
-        const dist = Math.sqrt((absX - centerGX) * (absX - centerGX) + (absY - centerGY) * (absY - centerGY));
-        whaleCells.push({
-          gx: absX, gy: absY,
-          dist: dist,
-          // baseline always-on so the big whale silhouette never disappears
-          light: 0.4,
-          target: 0.4,
-        });
+        whaleCells.push({ gx: gx + ox, gy: gy + oy });
+        whaleSet[(gx + ox) + ',' + (gy + oy)] = true;
       }
+
+    resetAnimation();
   }
 
-  // Draw the little whale mark centered in a cell
-  function drawMiniWhale(px, py, alpha) {
-    ctx.save();
-    ctx.translate(px + CELL / 2, py + CELL / 2);
-    ctx.scale(0.6, 0.6);   // whale path viewBox 27x21 → ~16x13px
-    ctx.globalAlpha = alpha;
-    ctx.fillStyle = C_WHALE;
-    ctx.beginPath();
-    const d = new Path2D(WHALE_D);
-    ctx.fill(d);
-    ctx.restore();
+  function resetAnimation() {
+    grid = {};
+    decorators = [];
+    time = 0;
+    phase = 0;
+    // ---- Phase 1 initial seed: inverted-L cluster of 5 blocks, near center ----
+    const s = [
+      [cx, cy], [cx+1, cy], [cx+2, cy],   // 3 horizontal
+      [cx+1, cy-1], [cx+1, cy-2],          // 2 upward
+    ];
+    s.forEach(function(p) {
+      grid[p[0] + ',' + p[1]] = { a: pickAlpha() };
+    });
+    // seed decorators near the cluster
+    decorators.push(makeDecorator(cx+3, cy+1, 'flower'));
+    decorators.push(makeDecorator(cx-1, cy-2, 'asterisk'));
+  }
+
+  function pickAlpha() {
+    const opts = [0.3, 0.5, 0.7, 1.0];
+    return opts[Math.floor(Math.random() * opts.length)];
+  }
+
+  function makeDecorator(gx, gy, type) {
+    return { x: gx, y: gy, type: type, born: time, ttl: 0.2 + Math.random() * 0.3 };
+  }
+
+  // ---- Phase 1: radial symmetric BFS spread (8 directions, diagonals longer) ----
+  // directions with diagonal bias: orthogonal step 1, diagonal step ~1.5
+  const DIRS = [
+    [1,0],[0,1],[-1,0],[0,-1],           // orthogonal
+    [1,1],[1,-1],[-1,1],[-1,-1]           // diagonal
+  ];
+  function radialTick() {
+    // collect frontier: active cells that have empty Moore neighbors
+    const frontier = [];
+    for (const key in grid) {
+      const [x, y] = key.split(',').map(Number);
+      for (const [dx, dy] of DIRS) {
+        const nx = x + dx, ny = y + dy;
+        if (nx >= 0 && nx < cols && ny >= 0 && ny < rows && !grid[nx + ',' + ny]) {
+          frontier.push([nx, ny, dx, dy]); break;
+        }
+      }
+    }
+    // Sparse, deliberate growth: a fixed small budget per tick so the
+    // snowflake spreads as an open 8-armed structure, not a filled disc.
+    const budget = 4;
+    let added = 0;
+    // sort by distance from center so expansion is roughly radial
+    frontier.sort(function(a, b) {
+      const da = Math.abs(a[0] - cx) + Math.abs(a[1] - cy);
+      const db = Math.abs(b[0] - cx) + Math.abs(b[1] - cy);
+      return da - db;
+    });
+    for (const [nx, ny, dx, dy] of frontier) {
+      if (added >= budget) break;
+      if (grid[nx + ',' + ny]) continue;
+      // diagonal directions get much higher probability -> long sparse arms
+      const diag = dx !== 0 && dy !== 0;
+      const prob = diag ? 0.85 : 0.22;
+      if (Math.random() < prob) {
+        grid[nx + ',' + ny] = { a: pickAlpha() };
+        added++;
+        // occasional decorator at the active edge
+        if (Math.random() < 0.06) {
+          decorators.push(makeDecorator(nx + dx, ny + dy, pickDecoratorType()));
+        }
+      }
+    }
+  }
+
+  function pickDecoratorType() {
+    const r = Math.random();
+    return r < 0.4 ? 'asterisk' : r < 0.8 ? 'plus' : 'flower';
+  }
+
+  // ---- Phase 2: discrete removal, keep 3 anchor blocks at the whale's
+  // upper-left corner so phase 3 grows right/down into the whale. ----
+  function clearTick() {
+    // aggressively remove blocks, keeping only the 3 corner anchors
+    for (const key in grid) {
+      const [x, y] = key.split(',').map(Number);
+      const isAnchor = (x === ox && y === oy) || (x === ox + 1 && y === oy) || (x === ox && y === oy + 1);
+      if (isAnchor) continue;
+      // remove quickly (discrete, per-block)
+      if (Math.random() < 0.7) {
+        delete grid[key];
+      }
+    }
+    // force the 3 anchors to exist
+    const corner = [[ox, oy], [ox+1, oy], [ox, oy+1]];
+    corner.forEach(function(p) {
+      if (p[0] >= 0 && p[0] < cols && p[1] >= 0 && p[1] < rows) {
+        grid[p[0] + ',' + p[1]] = { a: 0.9 };
+      }
+    });
+    // once sparse enough, move on
+    if (Object.keys(grid).length <= 8) phase = 3;
+  }
+
+  // ---- Phase 3: directional spread biased to +X/+Y, assembling the whale ----
+  const BIAS_DIRS = [[1,0],[0,1],[1,1]];
+  function directionalTick() {
+    // 1) spread from existing blocks toward the whale (right/down)
+    const frontier = [];
+    for (const key in grid) {
+      const [x, y] = key.split(',').map(Number);
+      for (const [dx, dy] of BIAS_DIRS) {
+        const nx = x + dx, ny = y + dy;
+        if (nx >= 0 && nx < cols && ny >= 0 && ny < rows && !grid[nx + ',' + ny]) {
+          frontier.push([nx, ny, dx, dy]); break;
+        }
+      }
+    }
+    const budget = 8;
+    let added = 0;
+    // prefer whale cells in the frontier (they grow the silhouette fast)
+    frontier.sort(function(a, b) {
+      const wa = whaleSet[a[0] + ',' + a[1]] ? 0 : 1;
+      const wb = whaleSet[b[0] + ',' + b[1]] ? 0 : 1;
+      return wa - wb;
+    });
+    for (const [nx, ny, dx, dy] of frontier) {
+      if (added >= budget) break;
+      if (grid[nx + ',' + ny]) continue;
+      const onWhale = !!whaleSet[nx + ',' + ny];
+      const prob = onWhale ? 0.95 : 0.25;
+      if (Math.random() < prob) {
+        grid[nx + ',' + ny] = { a: onWhale ? 0.9 : pickAlpha(), whale: onWhale };
+        added++;
+        if (onWhale && Math.random() < 0.05) {
+          decorators.push(makeDecorator(nx + dx, ny + dy, pickDecoratorType()));
+        }
+      }
+    }
+    // 2) fast fill: pull every whale cell in rapidly (fills silhouette ~5s)
+    for (let i = 0; i < whaleCells.length; i++) {
+      const c = whaleCells[i];
+      if (!grid[c.gx + ',' + c.gy]) {
+        if (Math.random() < 0.10) {
+          grid[c.gx + ',' + c.gy] = { a: 0.9, whale: true };
+        }
+      }
+    }
+    // once the whale is fully assembled, linger; reset to loop
+    let whaleFilled = 0;
+    for (let i = 0; i < whaleCells.length; i++) {
+      if (grid[whaleCells[i].gx + ',' + whaleCells[i].gy]) whaleFilled++;
+    }
+    if (whaleFilled >= whaleCells.length * 0.9) {
+      // brief hold then loop
+      if (holdAt === null) holdAt = time;
+      else if (time - holdAt > 6) { holdAt = null; resetAnimation(); }
+    }
   }
 
   function step() {
-    // advance the wave
-    waveD += WAVE_SPEED;
-    if (waveD > WAVE_MAX) {
-      waveD = 0;                     // loop the wave
-    }
-    // each whale cell: baseline silhouette always on; the wave adds a bright
-    // pulse at its leading edge and gently fades back behind it.
-    for (let i = 0; i < whaleCells.length; i++) {
-      const c = whaleCells[i];
-      // band of cells just inside the front is boosted to full brightness
-      const band = Math.abs(c.dist - waveD);
-      const boost = band < 2.5 ? (1 - band / 2.5) : 0;
-      c.target = 0.4 + 0.6 * Math.max(0, boost);
-      // inside the swept area: also keep a mild afterglow above baseline
-      if (c.dist <= waveD) c.target = Math.max(c.target, 0.55);
-      c.light += (c.target - c.light) * 0.15;
-      if (c.light < 0.004) c.light = 0.4;
+    time += 0.1;
+    // advance decorators
+    decorators = decorators.filter(function(d) { return time - d.born < d.ttl; });
+
+    if (phase === 0) {
+      phase = 1;
+    } else if (phase === 1) {
+      radialTick();
+      if (time > PHASE1_END) { phase = 2; }
+    } else if (phase === 2) {
+      clearTick();
+    } else if (phase === 3) {
+      directionalTick();
     }
   }
 
-  function draw() {
-    ctx.clearRect(0, 0, w, h);
-    const t = performance.now() / 1000;
-    mx += (tmx - mx) * 0.06; my += (tmy - my) * 0.06;
-
-    // ---- Resting grid: faint rounded cells everywhere ----
-    ctx.fillStyle = C_GRID;
-    for (let gy = 0; gy < rows; gy++)
-      for (let gx = 0; gx < cols; gx++) {
-        roundRect(gx * PITCH + 1, gy * PITCH + 1, CELL - 1, CELL - 1, CELL * 0.3);
-      }
-
-    // ---- Whale cells: little whales lit by the passing wave ----
-    for (let i = 0; i < whaleCells.length; i++) {
-      const c = whaleCells[i];
-      const px = c.gx * PITCH, py = c.gy * PITCH;
-      if (c.light <= 0) continue;
-      // cursor glow boost
-      const ccx = px + CELL / 2, ccy = py + CELL / 2;
-      const dist = Math.sqrt((ccx - mx) * (ccx - mx) + (ccy - my) * (ccy - my));
-      const boost = dist < 160 ? (160 - dist) / 160 * 0.35 : 0;
-      drawMiniWhale(px, py, Math.min(1, c.light + boost));
-    }
-
-    // ---- Wave ring highlight ----
-    if (waveD < WAVE_MAX) {
-      ctx.strokeStyle = C_WAVE;
-      ctx.lineWidth = 1.5;
+  // ---- Rendering ----
+  function drawBlock(gx, gy, alpha, isWhale) {
+    const px = gx * PITCH, py = gy * PITCH;
+    ctx.globalAlpha = alpha;
+    if (isWhale) {
+      // final whale blocks draw the little whale mark inside
+      ctx.save();
+      ctx.translate(px + CS / 2, py + CS / 2);
+      ctx.scale(0.6, 0.6);
+      ctx.fillStyle = C_BLOCK;
       ctx.beginPath();
-      ctx.arc(centerGX * PITCH + CELL / 2, centerGY * PITCH + CELL / 2, waveD * PITCH, 0, Math.PI * 2);
-      ctx.stroke();
+      ctx.fill(new Path2D(WHALE_D));
+      ctx.restore();
+    } else {
+      ctx.fillStyle = C_BLOCK;
+      roundRect(px + 1, py + 1, CS - 1, CS - 1, RADIUS);
     }
+    ctx.globalAlpha = 1;
+  }
+
+  function drawDecorator(d) {
+    const px = d.x * PITCH + CS / 2, py = d.y * PITCH + CS / 2;
+    const s = CS; // base size
+    ctx.strokeStyle = C_BLOCK;
+    ctx.lineWidth = 1.5;
+    const a = Math.max(0, 1 - (time - d.born) / d.ttl);
+    ctx.globalAlpha = a * 0.8;
+    if (d.type === 'asterisk') {
+      // 8-spoke star
+      for (let i = 0; i < 8; i++) {
+        const ang = i * Math.PI / 4;
+        ctx.beginPath();
+        ctx.moveTo(px, py);
+        ctx.lineTo(px + Math.cos(ang) * s * 0.35, py + Math.sin(ang) * s * 0.35);
+        ctx.stroke();
+      }
+    } else if (d.type === 'plus') {
+      ctx.beginPath();
+      ctx.moveTo(px - s * 0.22, py); ctx.lineTo(px + s * 0.22, py);
+      ctx.moveTo(px, py - s * 0.22); ctx.lineTo(px, py + s * 0.22);
+      ctx.stroke();
+    } else {
+      // flower: 8 petals
+      for (let i = 0; i < 8; i++) {
+        const ang = i * Math.PI / 4;
+        ctx.beginPath();
+        ctx.arc(px + Math.cos(ang) * s * 0.3, py + Math.sin(ang) * s * 0.3, s * 0.08, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+    ctx.globalAlpha = 1;
   }
 
   function roundRect(x, y, ww, hh, r) {
@@ -764,12 +939,28 @@ body {
     ctx.fill();
   }
 
+  function draw() {
+    ctx.clearRect(0, 0, w, h);
+    mx += (tmx - mx) * 0.06; my += (tmy - my) * 0.06;
+
+    // main blocks
+    for (const key in grid) {
+      const [x, y] = key.split(',').map(Number);
+      const cell = grid[key];
+      drawBlock(x, y, cell.a, !!cell.whale);
+    }
+    // decorators on top
+    for (let i = 0; i < decorators.length; i++) drawDecorator(decorators[i]);
+
+    // phase label hint (optional, subtle) — skip for now
+  }
+
   function loop() {
-    draw();
-    // automaton ticks ~10x/sec, drawing at full framerate
+    // logic ticks ~10x/sec, draw at full framerate
     if (Math.floor(performance.now() / 100) !== Math.floor((performance.now() - 100) / 100)) {
       step();
     }
+    draw();
     requestAnimationFrame(loop);
   }
 
@@ -785,13 +976,13 @@ body {
   hero.addEventListener('touchend', function() { tmx = -999; tmy = -999; });
 
   window.addEventListener('resize', resize);
-  // re-read theme colors whenever the theme changes
   window.addEventListener('themechange', readThemeColors);
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) { resize(); draw(); return; }
   readThemeColors();
   resize();
   requestAnimationFrame(loop);
 })();
+
 
 // ===== Timeline Scroll Controller =====
 (function() {
