@@ -1,0 +1,16 @@
+# Dev screenshots & reference scrapes (keep PWA icons)
+*.png
+!icon-192.png
+!icon-512.png
+!icon-maskable-512.png
+*.jpg
+chunk*.network-response
+backup-v2/
+report.html
+report.json
+
+# Misc
+*.pyc
+__pycache__/
+.DS_Store
+Thumbs.db

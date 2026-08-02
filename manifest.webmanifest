@@ -1,0 +1,31 @@
+{
+  "name": "DeepSeek Research — Recursive Self-Improvement",
+  "short_name": "DeepSeek Research",
+  "description": "Our progress toward recursive self-improvement — where AI systems learn to design, train, and refine the next generation of intelligence.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#4d6bfe",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
