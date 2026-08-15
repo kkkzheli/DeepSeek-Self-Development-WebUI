@@ -159,6 +159,48 @@ body {
 .header-nav a { text-decoration: none; color: var(--text-secondary); font-size: 14px; font-weight: 500; transition: color 0.2s ease; }
 .header-nav a:hover { color: var(--text-primary); }
 
+/* Language switcher — pill trigger + rounded dropdown left of the Research mark */
+.lang-switch { position: relative; margin-right: 16px; }
+.lang-trigger {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 12px; border-radius: 999px;
+  border: 1px solid var(--border-subtle);
+  background: color-mix(in srgb, var(--bg-surface) 55%, transparent);
+  color: var(--text-secondary); font-size: 13px; font-weight: 500;
+  cursor: pointer; transition: color 0.2s ease, border-color 0.2s ease, background 0.3s ease;
+}
+.lang-trigger:hover { color: var(--text-primary); border-color: var(--accent); }
+.lang-icon { flex-shrink: 0; opacity: 0.85; }
+.lang-current { white-space: nowrap; }
+.lang-chevron { transition: transform 0.25s var(--ease-out-expo); }
+.lang-switch.open .lang-chevron { transform: rotate(180deg); }
+.lang-menu {
+  position: absolute; top: calc(100% + 8px); left: 0; z-index: 110;
+  min-width: 172px; padding: 6px;
+  border-radius: 14px; border: 1px solid var(--border-subtle);
+  background: color-mix(in srgb, var(--bg-surface) 94%, transparent);
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  box-shadow: 0 16px 48px -12px color-mix(in srgb, var(--bg-page) 65%, transparent);
+  opacity: 0; transform: translateY(-6px) scale(0.97); transform-origin: top left;
+  visibility: hidden; pointer-events: none;
+  transition: opacity 0.18s var(--ease-out-quart), transform 0.18s var(--ease-out-quart),
+              visibility 0s linear 0.18s;
+}
+.lang-switch.open .lang-menu {
+  opacity: 1; transform: translateY(0) scale(1);
+  visibility: visible; pointer-events: auto;
+  transition: opacity 0.22s var(--ease-out-quart), transform 0.22s var(--ease-out-quart), visibility 0s;
+}
+.lang-option {
+  display: block; width: 100%; text-align: left;
+  padding: 8px 12px; border-radius: 9px; border: none;
+  background: transparent; color: var(--text-secondary);
+  font-size: 13.5px; cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.lang-option:hover { background: var(--accent-soft); color: var(--text-primary); }
+.lang-option.is-current { color: var(--accent); font-weight: 600; }
+
 /* Theme toggle */
 .theme-toggle {
   display: inline-flex; align-items: center; justify-content: center;
@@ -567,6 +609,9 @@ body {
   align-items: center;
 }
 .compare-row + .compare-row { border-top: 1px solid var(--border-subtle); }
+/* The halo row draws its own full outline; skip the divider above it so the
+   two never overlap. */
+.compare-row + .compare-row.is-ds { border-top: none; }
 /* DeepSeek row: accent halo so the home team pops out of the pack */
 .compare-row.is-ds {
   background: color-mix(in srgb, var(--accent) 10%, transparent);
@@ -676,6 +721,9 @@ body {
 }
 /* ≤900px: timeline stacks — visual on top, step cards below, both scroll-safe. */
 @media (max-width: 900px) {
+  /* 650vh of scroll for 5 steps is ~1.3 screens per step — exhausting to flick
+     through on a phone. Compress to 60vh per step so one flick advances a step. */
+  .timeline-scroll { height: 300vh; }
   .timeline-inner { grid-template-columns: 1fr; gap: 0; padding: 0 16px; height: 100dvh; }
   .flow-visual { display: block; height: 38dvh; margin: 0 auto; }
   .flow-svg { height: 38dvh; width: auto; max-width: 100%; }
@@ -752,13 +800,26 @@ body {
 <!-- Header -->
 <header class="site-header" id="header">
   <div class="header-inner">
+    <!-- Language switcher — sits left of the Research mark -->
+    <div class="lang-switch" id="lang-switch">
+      <button class="lang-trigger" id="lang-trigger" aria-haspopup="true" aria-expanded="false" aria-label="Change language" data-i18n-aria="lang_change">
+        <svg class="lang-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3.6 9h16.8M3.6 15h16.8M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"/></svg>
+        <span class="lang-current" id="lang-current">English</span>
+        <svg class="lang-chevron" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <div class="lang-menu" id="lang-menu" role="menu" aria-label="Language" data-i18n-aria="lang_menu">
+        <button class="lang-option" role="menuitem" data-lang="zh-CN"><span class="lang-option-label">简体中文</span></button>
+        <button class="lang-option" role="menuitem" data-lang="zh-TW"><span class="lang-option-label">繁體中文</span></button>
+        <button class="lang-option is-current" role="menuitem" data-lang="en"><span class="lang-option-label">English (US)</span></button>
+      </div>
+    </div>
     <a href="#" class="logo" aria-label="DeepSeek Research">
       <svg class="logo-icon" viewBox="0 0 27 21" fill="none" xmlns="http://www.w3.org/2000/svg">
   <path d="M26.5174 3.39471C26.235 3.2567 26.1137 3.52006 25.9487 3.65346C25.8923 3.69659 25.8446 3.75294 25.7969 3.80469C25.3846 4.24516 24.9027 4.53439 24.2737 4.49989C23.3536 4.44814 22.5682 4.73737 21.8735 5.44119C21.7258 4.57349 21.2353 4.0554 20.4889 3.72304C20.0985 3.55054 19.7034 3.37746 19.4297 3.00197C19.2388 2.73459 19.1865 2.43673 19.091 2.14289C19.0301 1.96579 18.9697 1.78466 18.7656 1.75418C18.5442 1.71968 18.4574 1.90541 18.3705 2.06067C18.0232 2.69549 17.8887 3.39471 17.9019 4.10313C17.9324 5.6965 18.6051 6.96556 19.9421 7.86834C20.0939 7.97184 20.133 8.07535 20.0852 8.22658C19.9938 8.53766 19.8857 8.83955 19.7903 9.15063C19.7293 9.34901 19.6384 9.39271 19.4257 9.30588C18.692 8.9994 18.0583 8.54571 17.4982 7.99772C16.5477 7.07827 15.6881 6.06336 14.6162 5.26869C14.3644 5.08296 14.1125 4.91045 13.8521 4.746C12.7584 3.68394 13.9952 2.81164 14.2816 2.70814C14.5812 2.60003 14.3857 2.22857 13.4179 2.23317C12.4502 2.2372 11.5646 2.56151 10.4359 2.99335C10.2708 3.05832 10.0972 3.10547 9.91951 3.14457C8.8954 2.95022 7.83162 2.90709 6.72069 3.03245C4.62877 3.26533 2.95777 4.25436 1.72954 5.94261C0.254043 7.97184 -0.0932678 10.2777 0.33167 12.6824C0.778458 15.2171 2.07225 17.3153 4.06008 18.9558C6.12152 20.6567 8.49577 21.4905 11.2047 21.3306C12.8498 21.2358 14.6812 21.0155 16.7473 19.2669C17.2682 19.5262 17.8151 19.6297 18.7219 19.7074C19.4205 19.7723 20.0933 19.6729 20.6143 19.5648C21.4302 19.3923 21.3739 18.6367 21.0789 18.4981C18.6874 17.3843 19.2124 17.8374 18.7351 17.4706C19.9501 16.033 21.8063 13.4776 22.379 9.99821C22.4353 9.61409 22.5072 9.073 22.4986 8.76192C22.494 8.57216 22.5377 8.49856 22.7545 8.47671C23.3536 8.40771 23.935 8.24383 24.4692 7.94999C26.0188 7.10357 26.6439 5.71318 26.7911 4.04678C26.8129 3.79204 26.7865 3.52869 26.5174 3.39471ZM13.0143 18.3946C10.6964 16.5724 9.5722 15.9726 9.10816 15.9985C8.67402 16.0244 8.75222 16.5212 8.84768 16.8449C8.94773 17.1646 9.07768 17.3849 9.25996 17.6655C9.38589 17.8512 9.47272 18.1272 9.13404 18.3348C8.38766 18.7965 7.08985 18.1796 7.0289 18.1491C5.51833 17.2595 4.25559 16.0853 3.36546 14.4793C2.50581 12.9337 2.0067 11.2753 1.92447 9.50542C1.90262 9.07818 2.02855 8.92695 2.45406 8.84932C3.01413 8.74582 3.59144 8.72397 4.15093 8.80619C6.51656 9.15178 8.53027 10.2092 10.2185 11.8848C11.1822 12.8388 11.9114 13.979 12.6623 15.0929C13.461 16.2757 14.3201 17.4027 15.4144 18.3268C15.8008 18.6505 16.109 18.8966 16.404 19.0783C15.5144 19.1778 14.0297 19.1991 13.0143 18.3958V18.3946ZM14.1252 11.2489C14.1252 11.0591 14.277 10.9079 14.4679 10.9079C14.511 10.9079 14.5501 10.9165 14.5852 10.9292C14.6329 10.9464 14.6766 10.9723 14.7111 11.0114C14.7721 11.0718 14.8066 11.158 14.8066 11.2489C14.8066 11.4386 14.6548 11.5899 14.4639 11.5899C14.273 11.5899 14.1252 11.4386 14.1252 11.2489ZM17.5759 13.0188C17.3545 13.1096 17.1331 13.1873 16.9203 13.1959C16.5903 13.2131 16.2303 13.0791 16.0348 12.9153C15.7312 12.6605 15.5139 12.5179 15.423 12.0734C15.3839 11.8837 15.4057 11.5899 15.4402 11.4214C15.5185 11.0585 15.4316 10.8257 15.1757 10.614C14.9676 10.4415 14.7025 10.3938 14.4115 10.3938C14.3029 10.3938 14.2034 10.3461 14.1292 10.3076C14.0079 10.2472 13.9078 10.096 14.0033 9.91023C14.0338 9.84985 14.1815 9.70322 14.216 9.67734C14.6111 9.45251 15.0665 9.52612 15.488 9.6946C15.8784 9.85445 16.174 10.1477 16.5989 10.5623C17.033 11.0631 17.1112 11.2011 17.3585 11.5772C17.554 11.871 17.7317 12.1729 17.8536 12.5185C17.9272 12.7341 17.8317 12.9107 17.5759 13.0188Z" fill="currentColor"/>
 </svg>
       <span class="logo-text">DeepSeek <span>Research</span></span>
     </a>
-    <nav><ul class="header-nav"><li><a href="#timeline-scroll">Research</a></li><li><a href="#about">About</a></li><li><button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme" title="Toggle theme"><svg class="theme-icon-sun" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg><svg class="theme-icon-moon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button></li></ul></nav>
+    <nav><ul class="header-nav"><li><a href="#timeline-scroll"><span data-i18n="nav_research">Research</span></a></li><li><a href="#about"><span data-i18n="nav_about">About</span></a></li><li><button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme" title="Toggle theme" data-i18n-aria="theme_toggle" data-i18n-title="theme_toggle"><svg class="theme-icon-sun" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg><svg class="theme-icon-moon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button></li></ul></nav>
   </div>
 </header>
 
@@ -769,15 +830,15 @@ body {
   <div class="hero-content">
     <p class="hero-eyebrow"><svg class="logo-icon" viewBox="0 0 27 21" fill="none" xmlns="http://www.w3.org/2000/svg">
   <path d="M26.5174 3.39471C26.235 3.2567 26.1137 3.52006 25.9487 3.65346C25.8923 3.69659 25.8446 3.75294 25.7969 3.80469C25.3846 4.24516 24.9027 4.53439 24.2737 4.49989C23.3536 4.44814 22.5682 4.73737 21.8735 5.44119C21.7258 4.57349 21.2353 4.0554 20.4889 3.72304C20.0985 3.55054 19.7034 3.37746 19.4297 3.00197C19.2388 2.73459 19.1865 2.43673 19.091 2.14289C19.0301 1.96579 18.9697 1.78466 18.7656 1.75418C18.5442 1.71968 18.4574 1.90541 18.3705 2.06067C18.0232 2.69549 17.8887 3.39471 17.9019 4.10313C17.9324 5.6965 18.6051 6.96556 19.9421 7.86834C20.0939 7.97184 20.133 8.07535 20.0852 8.22658C19.9938 8.53766 19.8857 8.83955 19.7903 9.15063C19.7293 9.34901 19.6384 9.39271 19.4257 9.30588C18.692 8.9994 18.0583 8.54571 17.4982 7.99772C16.5477 7.07827 15.6881 6.06336 14.6162 5.26869C14.3644 5.08296 14.1125 4.91045 13.8521 4.746C12.7584 3.68394 13.9952 2.81164 14.2816 2.70814C14.5812 2.60003 14.3857 2.22857 13.4179 2.23317C12.4502 2.2372 11.5646 2.56151 10.4359 2.99335C10.2708 3.05832 10.0972 3.10547 9.91951 3.14457C8.8954 2.95022 7.83162 2.90709 6.72069 3.03245C4.62877 3.26533 2.95777 4.25436 1.72954 5.94261C0.254043 7.97184 -0.0932678 10.2777 0.33167 12.6824C0.778458 15.2171 2.07225 17.3153 4.06008 18.9558C6.12152 20.6567 8.49577 21.4905 11.2047 21.3306C12.8498 21.2358 14.6812 21.0155 16.7473 19.2669C17.2682 19.5262 17.8151 19.6297 18.7219 19.7074C19.4205 19.7723 20.0933 19.6729 20.6143 19.5648C21.4302 19.3923 21.3739 18.6367 21.0789 18.4981C18.6874 17.3843 19.2124 17.8374 18.7351 17.4706C19.9501 16.033 21.8063 13.4776 22.379 9.99821C22.4353 9.61409 22.5072 9.073 22.4986 8.76192C22.494 8.57216 22.5377 8.49856 22.7545 8.47671C23.3536 8.40771 23.935 8.24383 24.4692 7.94999C26.0188 7.10357 26.6439 5.71318 26.7911 4.04678C26.8129 3.79204 26.7865 3.52869 26.5174 3.39471ZM13.0143 18.3946C10.6964 16.5724 9.5722 15.9726 9.10816 15.9985C8.67402 16.0244 8.75222 16.5212 8.84768 16.8449C8.94773 17.1646 9.07768 17.3849 9.25996 17.6655C9.38589 17.8512 9.47272 18.1272 9.13404 18.3348C8.38766 18.7965 7.08985 18.1796 7.0289 18.1491C5.51833 17.2595 4.25559 16.0853 3.36546 14.4793C2.50581 12.9337 2.0067 11.2753 1.92447 9.50542C1.90262 9.07818 2.02855 8.92695 2.45406 8.84932C3.01413 8.74582 3.59144 8.72397 4.15093 8.80619C6.51656 9.15178 8.53027 10.2092 10.2185 11.8848C11.1822 12.8388 11.9114 13.979 12.6623 15.0929C13.461 16.2757 14.3201 17.4027 15.4144 18.3268C15.8008 18.6505 16.109 18.8966 16.404 19.0783C15.5144 19.1778 14.0297 19.1991 13.0143 18.3958V18.3946ZM14.1252 11.2489C14.1252 11.0591 14.277 10.9079 14.4679 10.9079C14.511 10.9079 14.5501 10.9165 14.5852 10.9292C14.6329 10.9464 14.6766 10.9723 14.7111 11.0114C14.7721 11.0718 14.8066 11.158 14.8066 11.2489C14.8066 11.4386 14.6548 11.5899 14.4639 11.5899C14.273 11.5899 14.1252 11.4386 14.1252 11.2489ZM17.5759 13.0188C17.3545 13.1096 17.1331 13.1873 16.9203 13.1959C16.5903 13.2131 16.2303 13.0791 16.0348 12.9153C15.7312 12.6605 15.5139 12.5179 15.423 12.0734C15.3839 11.8837 15.4057 11.5899 15.4402 11.4214C15.5185 11.0585 15.4316 10.8257 15.1757 10.614C14.9676 10.4415 14.7025 10.3938 14.4115 10.3938C14.3029 10.3938 14.2034 10.3461 14.1292 10.3076C14.0079 10.2472 13.9078 10.096 14.0033 9.91023C14.0338 9.84985 14.1815 9.70322 14.216 9.67734C14.6111 9.45251 15.0665 9.52612 15.488 9.6946C15.8784 9.85445 16.174 10.1477 16.5989 10.5623C17.033 11.0631 17.1112 11.2011 17.3585 11.5772C17.554 11.871 17.7317 12.1729 17.8536 12.5185C17.9272 12.7341 17.8317 12.9107 17.5759 13.0188Z" fill="currentColor"/>
-</svg> DeepSeek Research Institute</p>
-    <h1 class="hero-title">When AI<br>builds itself</h1>
-    <p class="hero-subtitle">Our progress toward recursive self-improvement — where AI systems learn to design, train, and refine the next generation of intelligence. Watch the DeepSeek whale assemble itself, cell by cell, the way the loop compounds.</p>
+</svg> <span data-i18n="hero_inst">Research Institute</span></p>
+    <h1 class="hero-title" data-i18n="hero_title">When AI<br>builds itself</h1>
+    <p class="hero-subtitle" data-i18n="hero_sub">Our progress toward recursive self-improvement — where AI systems learn to design, train, and refine the next generation of intelligence. Watch the DeepSeek whale assemble itself, cell by cell, the way the loop compounds.</p>
     <div class="hero-actions">
-      <a class="hero-btn hero-btn--primary" href="https://chat.deepseek.com" target="_blank" rel="noopener noreferrer"><span class="btn-comet" aria-hidden="true"></span><span class="btn-dot"></span><span class="btn-label">Try DeepSeek Chat</span></a>
-      <a class="hero-btn" href="https://platform.deepseek.com" target="_blank" rel="noopener noreferrer"><span class="btn-comet" aria-hidden="true"></span><span class="btn-label">DeepSeek Platform</span></a>
+      <a class="hero-btn hero-btn--primary" href="https://chat.deepseek.com" target="_blank" rel="noopener noreferrer"><span class="btn-comet" aria-hidden="true"></span><span class="btn-dot"></span><span class="btn-label" data-i18n="btn_chat">Try DeepSeek Chat</span></a>
+      <a class="hero-btn" href="https://platform.deepseek.com" target="_blank" rel="noopener noreferrer"><span class="btn-comet" aria-hidden="true"></span><span class="btn-label" data-i18n="btn_platform">DeepSeek Platform</span></a>
     </div>
   </div>
-  <div class="scroll-indicator" aria-hidden="true"><span>Scroll</span><div class="scroll-line"></div></div>
+  <div class="scroll-indicator" aria-hidden="true"><span data-i18n="scroll">Scroll</span><div class="scroll-line"></div></div>
 </section>
 
 <!-- Timeline -->
@@ -953,28 +1014,28 @@ body {
       <div class="timeline-steps">
         <div class="step" id="step-0" data-state="active">
           <p class="step-year">2021–2023</p>
-          <h3 class="step-title">Building the first DeepSeek</h3>
-          <p class="step-body">In the early days, work at DeepSeek looked like work at any other tech company: people writing code, designing architectures, and tuning hyperparameters by hand. Human researchers drove every decision.</p>
+          <h3 class="step-title" data-i18n="s0_title">Building the first DeepSeek</h3>
+          <p class="step-body" data-i18n="s0_body">In the early days, work at DeepSeek looked like work at any other tech company: people writing code, designing architectures, and tuning hyperparameters by hand. Human researchers drove every decision.</p>
         </div>
         <div class="step" id="step-1" data-state="upcoming">
           <p class="step-year">2023–2025</p>
-          <h3 class="step-title">Chatbots</h3>
-          <p class="step-body">People used early AI chatbots to help with parts of the process, like generating short code snippets and summarizing research papers. The models were assistants — useful but not autonomous.</p>
+          <h3 class="step-title" data-i18n="s1_title">Chatbots</h3>
+          <p class="step-body" data-i18n="s1_body">People used early AI chatbots to help with parts of the process, like generating short code snippets and summarizing research papers. The models were assistants — useful but not autonomous.</p>
         </div>
         <div class="step" id="step-2" data-state="upcoming">
           <p class="step-year">2025–2026</p>
-          <h3 class="step-title">Coding agents</h3>
-          <p class="step-body">As agents became more capable, they were able to write and edit code on their own. DeepSeek's R1 reasoning model could verify outputs, and coding agents began contributing to training infrastructure.</p>
+          <h3 class="step-title" data-i18n="s2_title">Coding agents</h3>
+          <p class="step-body" data-i18n="s2_body">As agents became more capable, they were able to write and edit code on their own. DeepSeek’s R1 reasoning model could verify outputs, and coding agents began contributing to training infrastructure.</p>
         </div>
         <div class="step" id="step-3" data-state="upcoming">
           <p class="step-year">Today</p>
-          <h3 class="step-title">Autonomous agents</h3>
-          <p class="step-body">Agents can now run code themselves and delegate hours of work to other agents. They assist in architecture search, data curation, and hyperparameter tuning — the research loop starts accelerating.</p>
+          <h3 class="step-title" data-i18n="s3_title">Autonomous agents</h3>
+          <p class="step-body" data-i18n="s3_body">Agents can now run code themselves and delegate hours of work to other agents. They assist in architecture search, data curation, and hyperparameter tuning — the research loop starts accelerating.</p>
         </div>
         <div class="step" id="step-4" data-state="upcoming">
           <p class="step-year">20XX?</p>
-          <h3 class="step-title">Closing the loop</h3>
-          <p class="step-body">In the future, agents could become capable enough to build and train models themselves. If this happens, AI progress may start to accelerate exponentially — not through better hardware, but through <strong>AI designing the AIs that design the AIs</strong>.</p>
+          <h3 class="step-title" data-i18n="s4_title">Closing the loop</h3>
+          <p class="step-body" data-i18n="s4_body">In the future, agents could become capable enough to build and train models themselves. If this happens, AI progress may start to accelerate exponentially — not through better hardware, but through <strong>AI designing the AIs that design the AIs</strong>.</p>
         </div>
       </div>
 
@@ -985,29 +1046,29 @@ body {
 <!-- Benchmarks -->
 <section class="benchmarks" id="benchmarks">
   <div class="benchmarks-inner">
-    <p class="bench-eyebrow">Benchmarks</p>
-    <h2 class="bench-title">DeepSeek V4, measured</h2>
-    <p class="bench-sub">Every score below is quoted from DeepSeek's own model cards and the V4 technical report — all at maximum reasoning effort. Toggle between the two members of the V4 family.</p>
+    <p class="bench-eyebrow" data-i18n="bench_eyebrow">Benchmarks</p>
+    <h2 class="bench-title" data-i18n="bench_title">DeepSeek V4, measured</h2>
+    <p class="bench-sub" data-i18n="bench_sub">Every score below is quoted from DeepSeek’s own model cards and the V4 technical report — all at maximum reasoning effort. Toggle between the two members of the V4 family.</p>
     <div class="bench-tabs" role="tablist" aria-label="Benchmark model toggle">
       <span class="bench-thumb" aria-hidden="true"></span>
       <button class="bench-tab is-active" data-model="pro" role="tab" aria-selected="true"><span class="bench-tab-label">DeepSeek V4 Pro</span></button>
       <button class="bench-tab" data-model="flash" role="tab" aria-selected="false"><span class="bench-tab-label">DeepSeek V4 Flash</span></button>
     </div>
     <div class="bench-list" aria-live="polite"></div>
-    <p class="bench-asof">Data as of <strong>August 13, 2026</strong> — DeepSeek-V4-Pro-0813 and DeepSeek-V4-Flash-0731 model cards.</p>
-    <p class="bench-footnote">Sources: the <a href="https://huggingface.co/deepseek-ai/DeepSeek-V4-Pro-0813" target="_blank" rel="noopener noreferrer">DeepSeek-V4-Pro model card</a>, the <a href="https://huggingface.co/deepseek-ai/DeepSeek-V4-Flash-0731" target="_blank" rel="noopener noreferrer">DeepSeek-V4-Flash model card</a>, and the <a href="https://arxiv.org/abs/2606.19348" target="_blank" rel="noopener noreferrer">V4 technical report</a>. This page is an unofficial replica — scores are shown for entertainment and education only.</p>
+    <p class="bench-asof" data-i18n="bench_asof">Data as of <strong>August 13, 2026</strong> — DeepSeek-V4-Pro-0813 and DeepSeek-V4-Flash-0731 model cards.</p>
+    <p class="bench-footnote"><span data-i18n="bench_src_pre">Sources:</span> <a href="https://huggingface.co/deepseek-ai/DeepSeek-V4-Pro-0813" target="_blank" rel="noopener noreferrer"><span data-i18n="bench_card_pro">DeepSeek-V4-Pro model card</span></a><span data-i18n="bench_src_comma">,</span> <a href="https://huggingface.co/deepseek-ai/DeepSeek-V4-Flash-0731" target="_blank" rel="noopener noreferrer"><span data-i18n="bench_card_flash">DeepSeek-V4-Flash model card</span></a><span data-i18n="bench_src_and">, and</span> <a href="https://arxiv.org/abs/2606.19348" target="_blank" rel="noopener noreferrer"><span data-i18n="bench_card_report">V4 technical report</span></a>. <span data-i18n="bench_src_post">This page is an unofficial replica — scores are shown for entertainment and education only.</span></p>
   </div>
 </section>
 
 <!-- Model comparison -->
 <section class="compare" id="compare">
   <div class="compare-inner">
-    <p class="bench-eyebrow">Against the field</p>
-    <h2 class="bench-title">How V4 stacks up</h2>
-    <p class="bench-sub">Latest flagship scores from each lab's own publications, next to DeepSeek V4 Pro. Bars are color-coded per lab and the DeepSeek row is highlighted. Eval conditions differ between labs, so read this as a rough sketch, not a ranking.</p>
+    <p class="bench-eyebrow" data-i18n="cmp_eyebrow">Against the field</p>
+    <h2 class="bench-title" data-i18n="cmp_title">How V4 stacks up</h2>
+    <p class="bench-sub" data-i18n="cmp_sub">Latest flagship scores from each lab’s own publications, next to DeepSeek V4 Pro. Bars are color-coded per lab and the DeepSeek row is highlighted. Eval conditions differ between labs, so read this as a rough sketch, not a ranking.</p>
     <div class="compare-grid" id="compare-grid"></div>
-    <p class="bench-asof">Data collected <strong>August 15, 2026</strong> from official model cards and third-party leaderboards (vals.ai, tbench.ai). Terminal-Bench figures span versions 1.0–3.0.</p>
-    <p class="bench-footnote">Sources: each lab's official model card or launch post; the DeepSeek row quotes the DeepSeek-V4-Pro model card. This page is an unofficial replica — scores are shown for entertainment and education only.</p>
+    <p class="bench-asof" data-i18n="cmp_asof">Data collected <strong>August 15, 2026</strong> from official model cards and third-party leaderboards (vals.ai, tbench.ai). Terminal-Bench figures span versions 1.0–3.0.</p>
+    <p class="bench-footnote"><span data-i18n="cmp_src_pre">Sources:</span> <span data-i18n="cmp_src_lead">each lab’s official model card or launch post;</span> <span data-i18n="cmp_src_card">the DeepSeek row quotes the DeepSeek-V4-Pro model card.</span> <span data-i18n="cmp_src_post">This page is an unofficial replica — scores are shown for entertainment and education only.</span></p>
   </div>
 </section>
 
@@ -1015,34 +1076,34 @@ body {
 <article class="article" id="about">
   <div class="article-inner">
 
-    <h2>Evidence from the outside world</h2>
-    <p>The rate at which AI models improve is accelerating. The length of tasks that they can reliably complete on their own has been doubling roughly every four months, up from an earlier trend of doubling every seven months. In March 2024, DeepSeek's first reasoning models could complete software tasks that take humans about four minutes. A year later, R1 could manage tasks that took about an hour and a half. If this trend holds, tasks that take a skilled person days could come into range soon.</p>
-    <p>The same pattern appears on coding and research benchmarks. <strong>SWE-bench</strong>, a standard test of real-world software engineering, hands a model an actual open-source codebase and a real bug report, and asks it to write a fix that passes the project's own tests. Models have gone from scoring in the low single digits to saturating the benchmark in two years. Benchmarks that test whether a model can reproduce existing research tell the same story: AI systems went from succeeding roughly 20% of the time in 2024 to saturating the benchmark fifteen months later.</p>
+    <h2 data-i18n="a1_h">Evidence from the outside world</h2>
+    <p data-i18n="a1_p1">The rate at which AI models improve is accelerating. The length of tasks that they can reliably complete on their own has been doubling roughly every four months, up from an earlier trend of doubling every seven months. In March 2024, DeepSeek's first reasoning models could complete software tasks that take humans about four minutes. A year later, R1 could manage tasks that took about an hour and a half. If this trend holds, tasks that take a skilled person days could come into range soon.</p>
+    <p data-i18n="a1_p2">The same pattern appears on coding and research benchmarks. <strong>SWE-bench</strong>, a standard test of real-world software engineering, hands a model an actual open-source codebase and a real bug report, and asks it to write a fix that passes the project's own tests. Models have gone from scoring in the low single digits to saturating the benchmark in two years. Benchmarks that test whether a model can reproduce existing research tell the same story: AI systems went from succeeding roughly 20% of the time in 2024 to saturating the benchmark fifteen months later.</p>
 
-    <h2>Evidence from within DeepSeek</h2>
-    <p>Building a frontier model takes two broad categories of work. There is <strong>engineering</strong>: writing the code, standing up the infrastructure, and overseeing model training. And there is <strong>research</strong>: deciding what experiments to run, interpreting what comes back, and figuring out which ideas to try next.</p>
-    <p>Across both, the picture is consistent. In engineering, the model can be handed an underspecified problem and figure out how to solve it; humans supply the goal, but they no longer need to supply the method. In research, it can already match or outperform skilled humans at executing a well-specified experiment. However, large performance gaps persist when it comes to exercising judgement in choosing goals. That is the gap between AI today and a future system that could autonomously design its own successor.</p>
-    <p>The model writes a significant proportion of DeepSeek's code. Before the introduction of agentic coding tools, this number was in the low single digits. That shift also shows up in output per engineer: lines of code merged per engineer per day stayed constant for years, then began to climb when the model began to run code rather than just suggesting it. The slope steepened again when models began to work autonomously over longer time horizons.</p>
+    <h2 data-i18n="a2_h">Evidence from within DeepSeek</h2>
+    <p data-i18n="a2_p1">Building a frontier model takes two broad categories of work. There is <strong>engineering</strong>: writing the code, standing up the infrastructure, and overseeing model training. And there is <strong>research</strong>: deciding what experiments to run, interpreting what comes back, and figuring out which ideas to try next.</p>
+    <p data-i18n="a2_p2">Across both, the picture is consistent. In engineering, the model can be handed an underspecified problem and figure out how to solve it; humans supply the goal, but they no longer need to supply the method. In research, it can already match or outperform skilled humans at executing a well-specified experiment. However, large performance gaps persist when it comes to exercising judgement in choosing goals. That is the gap between AI today and a future system that could autonomously design its own successor.</p>
+    <p data-i18n="a2_p3">The model writes a significant proportion of DeepSeek's code. Before the introduction of agentic coding tools, this number was in the low single digits. That shift also shows up in output per engineer: lines of code merged per engineer per day stayed constant for years, then began to climb when the model began to run code rather than just suggesting it. The slope steepened again when models began to work autonomously over longer time horizons.</p>
 
     <hr>
 
-    <h2>What might the future look like?</h2>
-    <p>The evidence suggests that the human role is narrowing at each step in the AI development process. Once model- and human-authored code reach parity, humans will stop writing code entirely and shift to reviewing it. But if they can't review code as quickly as the model can generate it, human review becomes the bottleneck. Similarly, once the model can run experiments, the question shifts towards "which of these experiments is worth running?"</p>
-    <p>An area of human comparative advantage, for now, is research taste and judgement — choosing which problems matter, which results to trust, and when an approach is a dead end. It is genuinely unclear whether today's training methods and architectures could unlock that capacity. But AI is rarely advanced by "eureka!" moments. There have been a few, like the Transformer architecture, but paradigm-shifting ideas arrive years apart. In between, most progress is incremental: we scale something up, see what breaks, fix it, and try again. That is exactly the kind of workflow the model now excels at.</p>
+    <h2 data-i18n="a3_h">What might the future look like?</h2>
+    <p data-i18n="a3_p1">The evidence suggests that the human role is narrowing at each step in the AI development process. Once model- and human-authored code reach parity, humans will stop writing code entirely and shift to reviewing it. But if they can't review code as quickly as the model can generate it, human review becomes the bottleneck. Similarly, once the model can run experiments, the question shifts towards "which of these experiments is worth running?"</p>
+    <p data-i18n="a3_p2">An area of human comparative advantage, for now, is research taste and judgement — choosing which problems matter, which results to trust, and when an approach is a dead end. It is genuinely unclear whether today's training methods and architectures could unlock that capacity. But AI is rarely advanced by "eureka!" moments. There have been a few, like the Transformer architecture, but paradigm-shifting ideas arrive years apart. In between, most progress is incremental: we scale something up, see what breaks, fix it, and try again. That is exactly the kind of workflow the model now excels at.</p>
 
-    <h2>What if we're wrong?</h2>
-    <p>A natural objection is that the work that is still in human hands — choosing which problems to work on — is what matters most. Without that judgement, the model is a capable assistant, but not a system that could drive AI progress on its own.</p>
-    <p>Even if the model never achieves good research taste, a conservative reading of the evidence still implies compounding acceleration. If humans spend most of their time on the single-digit fraction of work that is direction-setting, while the model handles the rest, that means each engineer is steering far more work than before. The less conservative reading is that the early evidence on improving research judgement — narrow as it is today — is an indicator that this capability is improving as well. "Research taste" might be just another capability that AI systems fail at for a time, then get good at.</p>
+    <h2 data-i18n="a4_h">What if we're wrong?</h2>
+    <p data-i18n="a4_p1">A natural objection is that the work that is still in human hands — choosing which problems to work on — is what matters most. Without that judgement, the model is a capable assistant, but not a system that could drive AI progress on its own.</p>
+    <p data-i18n="a4_p2">Even if the model never achieves good research taste, a conservative reading of the evidence still implies compounding acceleration. If humans spend most of their time on the single-digit fraction of work that is direction-setting, while the model handles the rest, that means each engineer is steering far more work than before. The less conservative reading is that the early evidence on improving research judgement — narrow as it is today — is an indicator that this capability is improving as well. "Research taste" might be just another capability that AI systems fail at for a time, then get good at.</p>
 
-    <h2>Possible futures</h2>
-    <p>What happens next depends on two things: whether the trend continues, and what we choose to do if it does. We can imagine at least three scenarios:</p>
+    <h2 data-i18n="a5_h">Possible futures</h2>
+    <p data-i18n="a5_p1">What happens next depends on two things: whether the trend continues, and what we choose to do if it does. We can imagine at least three scenarios:</p>
     <ul>
-      <li><strong>The trend stalls, but today's capabilities are widely diffused.</strong> Many of these trajectories may actually be S-curves. We may be approaching the bend, where returns to scale diminish and the line flattens.</li>
-      <li><strong>AI labs continue to see compounding efficiency gains.</strong> AI development becomes substantially automated, but humans continue to set research directions and judge results. 100-person companies could do the work of 10,000-person organizations.</li>
-      <li><strong>AI systems become capable of full recursive self-improvement.</strong> If technical trends continue and AI systems are able to develop the capabilities inherent to transformative human ingenuity, then they could design and refine themselves — closing the loop.</li>
+      <li data-i18n="a5_li1"><strong>The trend stalls, but today's capabilities are widely diffused.</strong> Many of these trajectories may actually be S-curves. We may be approaching the bend, where returns to scale diminish and the line flattens.</li>
+      <li data-i18n="a5_li2"><strong>AI labs continue to see compounding efficiency gains.</strong> AI development becomes substantially automated, but humans continue to set research directions and judge results. 100-person companies could do the work of 10,000-person organizations.</li>
+      <li data-i18n="a5_li3"><strong>AI systems become capable of full recursive self-improvement.</strong> If technical trends continue and AI systems are able to develop the capabilities inherent to transformative human ingenuity, then they could design and refine themselves — closing the loop.</li>
     </ul>
-    <p>In that last world, the pace of progress in AI development becomes determined entirely by the availability of compute. Humans play a substantially diminished role, likely moving most of our effort towards oversight, validation, and verification of an expanding "virtual lab" run by AI systems.</p>
-    <p>We are not there yet, and recursive self-improvement is not inevitable. But it could come sooner than most institutions are prepared for.</p>
+    <p data-i18n="a5_p2">In that last world, the pace of progress in AI development becomes determined entirely by the availability of compute. Humans play a substantially diminished role, likely moving most of our effort towards oversight, validation, and verification of an expanding "virtual lab" run by AI systems.</p>
+    <p data-i18n="a5_p3">We are not there yet, and recursive self-improvement is not inevitable. But it could come sooner than most institutions are prepared for.</p>
 
   </div>
 </article>
@@ -1059,13 +1120,65 @@ body {
       </a>
     </div>
     <div class="footer-tag">
-      <p class="footer-text">Exploring the frontier of recursive self-improvement.</p>
-      <p class="footer-replica">Replica by <a href="https://github.com/kkkzheli" target="_blank" rel="noopener noreferrer">kkkzheli</a> · <a href="https://github.com/kkkzheli" target="_blank" rel="noopener noreferrer">github.com/kkkzheli</a></p>
+      <p class="footer-text" data-i18n="footer_text">Exploring the frontier of recursive self-improvement.</p>
+      <p class="footer-replica"><span data-i18n="footer_replica_pre">Replica by</span> <a href="https://github.com/kkkzheli" target="_blank" rel="noopener noreferrer">kkkzheli</a> · <a href="https://github.com/kkkzheli" target="_blank" rel="noopener noreferrer">github.com/kkkzheli</a></p>
     </div>
   </div>
 </footer>
 
+<script id="i18n-data" type="application/json">{"en": {"nav_research": "Research", "nav_about": "About", "theme_toggle": "Toggle theme", "lang_change": "Change language", "lang_menu": "Language", "cmp_rank": "No. {n}", "hero_inst": "Research Institute", "hero_title": "When AI<br>builds itself", "hero_sub": "Our progress toward recursive self-improvement — where AI systems learn to design, train, and refine the next generation of intelligence. Watch the DeepSeek whale assemble itself, cell by cell, the way the loop compounds.", "btn_chat": "Try DeepSeek Chat", "btn_platform": "DeepSeek Platform", "scroll": "Scroll", "s0_title": "Building the first DeepSeek", "s0_body": "In the early days, work at DeepSeek looked like work at any other tech company: people writing code, designing architectures, and tuning hyperparameters by hand. Human researchers drove every decision.", "s1_title": "Chatbots", "s1_body": "People used early AI chatbots to help with parts of the process, like generating short code snippets and summarizing research papers. The models were assistants — useful but not autonomous.", "s2_title": "Coding agents", "s2_body": "As agents became more capable, they were able to write and edit code on their own. DeepSeek’s R1 reasoning model could verify outputs, and coding agents began contributing to training infrastructure.", "s3_title": "Autonomous agents", "s3_body": "Agents can now run code themselves and delegate hours of work to other agents. They assist in architecture search, data curation, and hyperparameter tuning — the research loop starts accelerating.", "s4_title": "Closing the loop", "s4_body": "In the future, agents could become capable enough to build and train models themselves. If this happens, AI progress may start to accelerate exponentially — not through better hardware, but through <strong>AI designing the AIs that design the AIs</strong>.", "bench_eyebrow": "Benchmarks", "bench_title": "DeepSeek V4, measured", "bench_sub": "Every score below is quoted from DeepSeek’s own model cards and the V4 technical report — all at maximum reasoning effort. Toggle between the two members of the V4 family.", "bench_asof": "Data as of <strong>August 13, 2026</strong> — DeepSeek-V4-Pro-0813 and DeepSeek-V4-Flash-0731 model cards.", "bench_src_pre": "Sources:", "bench_src_post": "This page is an unofficial replica — scores are shown for entertainment and education only.", "bench_src_and": ", and", "bench_src_comma": ",", "bench_card_pro": "DeepSeek-V4-Pro model card", "bench_card_flash": "DeepSeek-V4-Flash model card", "bench_card_report": "V4 technical report", "cmp_eyebrow": "Against the field", "cmp_title": "How V4 stacks up", "cmp_sub": "Latest flagship scores from each lab’s own publications, next to DeepSeek V4 Pro. Bars are color-coded per lab and the DeepSeek row is highlighted. Eval conditions differ between labs, so read this as a rough sketch, not a ranking.", "cmp_asof": "Data collected <strong>August 15, 2026</strong> from official model cards and third-party leaderboards (vals.ai, tbench.ai). Terminal-Bench figures span versions 1.0–3.0.", "cmp_src_pre": "Sources:", "cmp_src_post": "This page is an unofficial replica — scores are shown for entertainment and education only.", "cmp_src_lead": "each lab’s official model card or launch post;", "cmp_src_card": "the DeepSeek row quotes the DeepSeek-V4-Pro model card", "a1_h": "Evidence from the outside world", "a1_p1": "The rate at which AI models improve is accelerating. The length of tasks that they can reliably complete on their own has been doubling roughly every four months, up from an earlier trend of doubling every seven months. In March 2024, DeepSeek’s first reasoning models could complete software tasks that take humans about four minutes. A year later, R1 could manage tasks that took about an hour and a half. If this trend holds, tasks that take a skilled person days could come into range soon.", "a1_p2": "The same pattern appears on coding and research benchmarks. <strong>SWE-bench</strong>, a standard test of real-world software engineering, hands a model an actual open-source codebase and a real bug report, and asks it to write a fix that passes the project’s own tests. Models have gone from scoring in the low single digits to saturating the benchmark in two years. Benchmarks that test whether a model can reproduce existing research tell the same story: AI systems went from succeeding roughly 20% of the time in 2024 to saturating the benchmark fifteen months later.", "a2_h": "Evidence from within DeepSeek", "a2_p1": "Building a frontier model takes two broad categories of work. There is <strong>engineering</strong>: writing the code, standing up the infrastructure, and overseeing model training. And there is <strong>research</strong>: deciding what experiments to run, interpreting what comes back, and figuring out which ideas to try next.", "a2_p2": "Across both, the picture is consistent. In engineering, the model can be handed an underspecified problem and figure out how to solve it; humans supply the goal, but they no longer need to supply the method. In research, it can already match or outperform skilled humans at executing a well-specified experiment. However, large performance gaps persist when it comes to exercising judgement in choosing goals. That is the gap between AI today and a future system that could autonomously design its own successor.", "a2_p3": "The model writes a significant proportion of DeepSeek’s code. Before the introduction of agentic coding tools, this number was in the low single digits. That shift also shows up in output per engineer: lines of code merged per engineer per day stayed constant for years, then began to climb when the model began to run code rather than just suggesting it. The slope steepened again when models began to work autonomously over longer time horizons.", "a3_h": "What might the future look like?", "a3_p1": "The evidence suggests that the human role is narrowing at each step in the AI development process. Once model- and human-authored code reach parity, humans will stop writing code entirely and shift to reviewing it. But if they can’t review code as quickly as the model can generate it, human review becomes the bottleneck. Similarly, once the model can run experiments, the question shifts towards “which of these experiments is worth running?”", "a3_p2": "An area of human comparative advantage, for now, is research taste and judgement — choosing which problems matter, which results to trust, and when an approach is a dead end. It is genuinely unclear whether today’s training methods and architectures could unlock that capacity. But AI is rarely advanced by “eureka!” moments. There have been a few, like the Transformer architecture, but paradigm-shifting ideas arrive years apart. In between, most progress is incremental: we scale something up, see what breaks, fix it, and try again. That is exactly the kind of workflow the model now excels at.", "a4_h": "What if we’re wrong?", "a4_p1": "A natural objection is that the work that is still in human hands — choosing which problems to work on — is what matters most. Without that judgement, the model is a capable assistant, but not a system that could drive AI progress on its own.", "a4_p2": "Even if the model never achieves good research taste, a conservative reading of the evidence still implies compounding acceleration. If humans spend most of their time on the single-digit fraction of work that is direction-setting, while the model handles the rest, that means each engineer is steering far more work than before. The less conservative reading is that the early evidence on improving research judgement — narrow as it is today — is an indicator that this capability is improving as well. “Research taste” might be just another capability that AI systems fail at for a time, then get good at.", "a5_h": "Possible futures", "a5_p1": "What happens next depends on two things: whether the trend continues, and what we choose to do if it does. We can imagine at least three scenarios:", "a5_li1": "<strong>The trend stalls, but today’s capabilities are widely diffused.</strong> Many of these trajectories may actually be S-curves. We may be approaching the bend, where returns to scale diminish and the line flattens.", "a5_li2": "<strong>AI labs continue to see compounding efficiency gains.</strong> AI development becomes substantially automated, but humans continue to set research directions and judge results. 100-person companies could do the work of 10,000-person organizations.", "a5_li3": "<strong>AI systems become capable of full recursive self-improvement.</strong> If technical trends continue and AI systems are able to develop the capabilities inherent to transformative human ingenuity, then they could design and refine themselves — closing the loop.", "a5_p2": "In that last world, the pace of progress in AI development becomes determined entirely by the availability of compute. Humans play a substantially diminished role, likely moving most of our effort towards oversight, validation, and verification of an expanding “virtual lab” run by AI systems.", "a5_p3": "We are not there yet, and recursive self-improvement is not inevitable. But it could come sooner than most institutions are prepared for.", "footer_text": "Exploring the frontier of recursive self-improvement.", "footer_replica_pre": "Replica by"}, "zh-CN": {"nav_research": "研究", "nav_about": "关于", "theme_toggle": "切换主题", "lang_change": "切换语言", "lang_menu": "语言", "cmp_rank": "第 {n} 名", "hero_inst": "研究机构", "hero_title": "当 AI 亲手<br>打造自己", "hero_sub": "我们迈向递归式自我改进的进程——AI 系统学会设计、训练并打磨下一代智能。观看 DeepSeek 鲸鱼一个像素一个像素地组装自己，就像循环不断复利一样。", "btn_chat": "体验 DeepSeek Chat", "btn_platform": "DeepSeek 开放平台", "scroll": "向下滑动", "s0_title": "打造第一个 DeepSeek", "s0_body": "在早期，DeepSeek 的工作与其他科技公司并无二致：人们手写代码、设计架构、手工调参。每一个决策都由人类研究员驱动。", "s1_title": "聊天机器人", "s1_body": "人们用早期的 AI 聊天机器人协助部分工作，比如生成代码片段、总结研究论文。模型只是助手——有用，但谈不上自主。", "s2_title": "编码智能体", "s2_body": "随着智能体能力增强，它们可以独立编写和修改代码。DeepSeek 的 R1 推理模型能够验证输出，编码智能体开始参与训练基础设施的建设。", "s3_title": "自主智能体", "s3_body": "智能体如今可以自己运行代码，并把数小时的工作委托给其他智能体。它们协助架构搜索、数据整理和超参数调优——研究循环开始加速。", "s4_title": "闭环", "s4_body": "未来，智能体或许有能力自己构建和训练模型。如果这一天到来，AI 的进步可能呈指数级加速——不是靠更强的硬件，而是靠<strong>AI 设计出设计 AI 的 AI</strong>。", "bench_eyebrow": "基准测试", "bench_title": "DeepSeek V4，用数据说话", "bench_sub": "以下所有分数均引自 DeepSeek 官方模型卡与 V4 技术报告——全部为最高推理强度配置。可在 V4 家族的两个成员之间切换。", "bench_asof": "数据截至 <strong>2026 年 8 月 13 日</strong>——DeepSeek-V4-Pro-0813 与 DeepSeek-V4-Flash-0731 模型卡。", "bench_src_pre": "来源：", "bench_src_post": "本页面为非官方复刻——分数仅供娱乐与学习展示。", "bench_src_and": "、", "bench_src_comma": "，", "bench_card_pro": "DeepSeek-V4-Pro 模型卡", "bench_card_flash": "DeepSeek-V4-Flash 模型卡", "bench_card_report": "V4 技术报告", "cmp_eyebrow": "与对手同台", "cmp_title": "V4 的排位", "cmp_sub": "各实验室自家发布的最新旗舰分数，与 DeepSeek V4 Pro 并列对比。柱状图按实验室配色，DeepSeek 行高亮显示。各实验室评测条件不同，请将其视为粗略参考，而非正式排名。", "cmp_asof": "数据采集于 <strong>2026 年 8 月 15 日</strong>，来自官方模型卡与第三方排行榜（vals.ai、tbench.ai）。Terminal-Bench 数据横跨 1.0–3.0 版本。", "cmp_src_pre": "来源：", "cmp_src_post": "本页面为非官方复刻——分数仅供娱乐与学习展示。", "cmp_src_lead": "各实验室的官方模型卡或发布文章；", "cmp_src_card": "DeepSeek 行引自 DeepSeek-V4-Pro 模型卡", "a1_h": "来自外界的证据", "a1_p1": "AI 模型的进步速度正在加快。模型能够可靠独立完成的任务时长，大约每四个月翻一番——早前这一趋势还是每七个月翻一番。2024 年 3 月，DeepSeek 的第一代推理模型能完成人类约需四分钟的软件任务；一年后，R1 已能处理约一个半小时的任务。如果这一趋势延续，需要熟练工程师数天才能完成的任务，很快就会进入模型的射程。", "a1_p2": "同样的模式也出现在编码与研究基准上。<strong>SWE-bench</strong> 是一项检验真实世界软件工程的标尺：给模型一个真实的开源代码库和一份真实的 bug 报告，要求它写出能通过项目自身测试的修复。两年间，模型从个位数得分一路涨到满分饱和。检验模型能否复现现有研究的基准也讲述着同样的故事：AI 系统从 2024 年约 20% 的成功率，到十五个月后达到饱和。", "a2_h": "来自 DeepSeek 内部的证据", "a2_p1": "构建前沿模型需要两类工作。<strong>工程</strong>：编写代码、搭建基础设施、监督模型训练。<strong>研究</strong>：决定做什么实验、解读实验结果、判断下一步尝试哪些思路。", "a2_p2": "在这两条线上，图景是一致的。工程方面，把问题交给模型时无需定义得太具体，它自己能摸索出解法；人类提供目标，但不再需要提供方法。研究方面，在执行一个定义良好的实验时，它已经能与熟练人类匹敌甚至胜出。但在选择目标时运用判断力这一点上，巨大的差距依然存在。这正是今天的 AI 与未来能够自主设计自身继任者的系统之间的鸿沟。", "a2_p3": "DeepSeek 相当比例的代码由模型编写。在引入智能体编码工具之前，这个数字只有个位数。这一转变也体现在人均产出上：每位工程师每日合并的代码行数多年持平，而当模型开始自己运行代码而不仅是给出建议后，这一数字开始攀升。当模型开始在更长的时间尺度上自主工作时，斜率再次变陡。", "a3_h": "未来会是什么样？", "a3_p1": "证据表明，在 AI 开发流程的每一个环节，人类的角色都在收窄。一旦模型编写的代码与人类编写的代码达到同等水平，人类将完全停止写代码，转而做审查。但如果人类审查的速度赶不上模型生成的速度，人工审查就会成为瓶颈。同样，一旦模型能够自行运行实验，问题就转向「这些实验里哪个值得做？」", "a3_p2": "目前人类仍具相对优势的领域，是研究的品味与判断——选择哪些问题值得研究、哪些结果值得信任、哪条路线已经走死。今天的训练方法与架构能否解锁这种能力，目前尚无定论。但 AI 的进步很少靠「灵光一现」。确实有过少数例外，比如 Transformer 架构，但范式级的思想往往相隔数年才会出现一次。在这之间，大部分进步都是渐进的：把规模放大，看哪里出问题，修好，再试一次。这正是模型如今最擅长的工作流。", "a4_h": "如果我们错了呢？", "a4_p1": "一个自然的反驳是：仍掌握在人类手中的工作——选择研究什么问题——才是最重要的。没有这份判断力，模型只是能干的助手，而不是能独立推动 AI 进步的系统。", "a4_p2": "即使模型永远无法获得良好的研究品味，对证据的保守解读依然指向复利式的加速。如果人类把大部分时间花在占比个位数的方向性工作上，其余由模型承担，那意味着每位工程师正在驾驭远超从前的工作量。而更不保守的解读是：研究判断力正在提升的早期证据——尽管今天还很微弱——说明这项能力同样在改善。「研究品味」或许只是又一项 AI 系统暂时不行、日后终会精进的能力。", "a5_h": "可能的未来", "a5_p1": "接下来会发生什么，取决于两件事：趋势是否延续，以及我们选择如何应对。至少可以设想三种情景：", "a5_li1": "<strong>趋势停滞，但今天的能力广泛扩散。</strong>许多轨迹实际上可能是 S 形曲线。我们或许正接近拐点：规模回报递减，曲线趋于平缓。", "a5_li2": "<strong>AI 实验室持续获得复利式效率增益。</strong>AI 开发大幅自动化，但人类继续设定研究方向、评判结果。100 人的公司可能做出 10000 人组织的工作量。", "a5_li3": "<strong>AI 系统实现完整的递归式自我改进。</strong>如果技术趋势延续，AI 系统能够发展出变革性人类创造力所蕴含的能力，那么它们就能设计并打磨自身——闭环由此合拢。", "a5_p2": "在最后一种世界里，AI 开发的进步速度将完全由算力的可获得性决定。人类扮演的角色大幅收缩，我们的大部分精力很可能转向对不断扩张的、由 AI 系统运营的「虚拟实验室」进行监督、验证与核查。", "a5_p3": "我们还没有走到那一步，递归式自我改进也并非必然。但它到来的时间，可能比大多数机构准备得还要早。", "footer_text": "探索递归式自我改进的前沿。", "footer_replica_pre": "复刻者"}, "zh-TW": {"nav_research": "研究", "nav_about": "關於", "theme_toggle": "切換主題", "lang_change": "切換語言", "lang_menu": "語言", "cmp_rank": "第 {n} 名", "hero_inst": "研究機構", "hero_title": "當 AI 親手<br>打造自己", "hero_sub": "我們邁向遞迴式自我改進的進程——AI 系統學會設計、訓練並打磨下一代智慧。觀看 DeepSeek 鯨魚一個像素一個像素地組裝自己，就像循環不斷複利一樣。", "btn_chat": "體驗 DeepSeek Chat", "btn_platform": "DeepSeek 開放平台", "scroll": "向下滑動", "s0_title": "打造第一個 DeepSeek", "s0_body": "在早期，DeepSeek 的工作與其他科技公司並無二致：人們手寫程式碼、設計架構、手工調參。每一個決策都由人類研究員驅動。", "s1_title": "聊天機器人", "s1_body": "人們用早期的 AI 聊天機器人協助部分工作，例如產生程式碼片段、總結研究論文。模型只是助手——有用，但談不上自主。", "s2_title": "編碼智能體", "s2_body": "隨著智能體能力增強，它們可以獨立編寫和修改程式碼。DeepSeek 的 R1 推理模型能夠驗證輸出，編碼智能體開始參與訓練基礎設施的建設。", "s3_title": "自主智能體", "s3_body": "智能體如今可以自己執行程式碼，並把數小時的工作委託給其他智能體。它們協助架構搜尋、資料整理與超參數調校——研究循環開始加速。", "s4_title": "閉環", "s4_body": "未來，智能體或許有能力自己構建和訓練模型。如果這一天到來，AI 的進步可能呈指數級加速——不是靠更強的硬體，而是靠<strong>AI 設計出設計 AI 的 AI</strong>。", "bench_eyebrow": "基準測試", "bench_title": "DeepSeek V4，用資料說話", "bench_sub": "以下所有分數均引自 DeepSeek 官方模型卡與 V4 技術報告——全部為最高推理強度配置。可在 V4 家族的兩個成員之間切換。", "bench_asof": "資料截至 <strong>2026 年 8 月 13 日</strong>——DeepSeek-V4-Pro-0813 與 DeepSeek-V4-Flash-0731 模型卡。", "bench_src_pre": "來源：", "bench_src_post": "本頁面為非官方復刻——分數僅供娛樂與學習展示。", "bench_src_and": "、", "bench_src_comma": "，", "bench_card_pro": "DeepSeek-V4-Pro 模型卡", "bench_card_flash": "DeepSeek-V4-Flash 模型卡", "bench_card_report": "V4 技術報告", "cmp_eyebrow": "與對手同台", "cmp_title": "V4 的排位", "cmp_sub": "各實驗室自家發布的最新旗艦分數，與 DeepSeek V4 Pro 並列對比。長條圖按實驗室配色，DeepSeek 列高亮顯示。各實驗室評測條件不同，請將其視為粗略參考，而非正式排名。", "cmp_asof": "資料採集於 <strong>2026 年 8 月 15 日</strong>，來自官方模型卡與第三方排行榜（vals.ai、tbench.ai）。Terminal-Bench 資料橫跨 1.0–3.0 版本。", "cmp_src_pre": "來源：", "cmp_src_post": "本頁面為非官方復刻——分數僅供娛樂與學習展示。", "cmp_src_lead": "各實驗室的官方模型卡或發布文章；", "cmp_src_card": "DeepSeek 列引自 DeepSeek-V4-Pro 模型卡", "a1_h": "來自外界的證據", "a1_p1": "AI 模型的進步速度正在加快。模型能夠可靠獨立完成的任務時長，大約每四個月翻一番——早前這一趨勢還是每七個月翻一番。2024 年 3 月，DeepSeek 的第一代推理模型能完成人類約需四分鐘的軟體任務；一年後，R1 已能處理約一個半小時的任務。如果這一趨勢延續，需要熟練工程師數天才能完成的任務，很快就會進入模型的射程。", "a1_p2": "同樣的模式也出現在編碼與研究基準上。<strong>SWE-bench</strong> 是一項檢驗真實世界軟體工程的標尺：給模型一個真實的開源程式碼庫和一份真實的 bug 報告，要求它寫出能通過專案自身測試的修復。兩年間，模型從個位數得分一路漲到滿分飽和。檢驗模型能否重現現有研究的基準也講述著同樣的故事：AI 系統從 2024 年約 20% 的成功率，到十五個月後達到飽和。", "a2_h": "來自 DeepSeek 內部的證據", "a2_p1": "構建前沿模型需要兩類工作。<strong>工程</strong>：編寫程式碼、搭建基礎設施、監督模型訓練。<strong>研究</strong>：決定做什麼實驗、解讀實驗結果、判斷下一步嘗試哪些思路。", "a2_p2": "在這兩條線上，圖景是一致的。工程方面，把問題交給模型時無需定義得太具體，它自己能摸索出解法；人類提供目標，但不再需要提供方法。研究方面，在執行一個定義良好的實驗時，它已經能與熟練人類匹敵甚至勝出。但在選擇目標時運用判斷力這一點上，巨大的差距依然存在。這正是今天的 AI 與未來能夠自主設計自身繼任者的系統之間的鴻溝。", "a2_p3": "DeepSeek 相當比例的程式碼由模型編寫。在引入智能體編碼工具之前，這個數字只有個位數。這一轉變也體現在人均產出上：每位工程師每日合併的程式碼行數多年持平，而當模型開始自己執行程式碼而不只是給出建議後，這一數字開始攀升。當模型開始在更長的時間尺度上自主工作時，斜率再次變陡。", "a3_h": "未來會是什麼樣子？", "a3_p1": "證據表明，在 AI 開發流程的每一個環節，人類的角色都在收窄。一旦模型編寫的程式碼與人類編寫的程式碼達到同等水準，人類將完全停止寫程式碼，轉而做審查。但如果人類審查的速度趕不上模型產生的速度，人工審查就會成為瓶頸。同樣，一旦模型能夠自行執行實驗，問題就轉向「這些實驗裡哪個值得做？」", "a3_p2": "目前人類仍具相對優勢的領域，是研究的品味與判斷——選擇哪些問題值得研究、哪些結果值得信任、哪條路線已經走死。今天的訓練方法與架構能否解鎖這種能力，目前尚無定論。但 AI 的進步很少靠「靈光一現」。確實有過少數例外，比如 Transformer 架構，但範式級的思想往往相隔數年才會出現一次。在這之間，大部分進步都是漸進的：把規模放大，看哪裡出問題，修好，再試一次。這正是模型如今最擅長的工作流程。", "a4_h": "如果我們錯了呢？", "a4_p1": "一個自然的反駁是：仍掌握在人類手中的工作——選擇研究什麼問題——才是最重要的。沒有這份判斷力，模型只是能幹的助手，而不是能獨立推動 AI 進步的系統。", "a4_p2": "即使模型永遠無法獲得良好的研究品味，對證據的保守解讀依然指向複利式的加速。如果人類把大部分時間花在占比個位數的方向性工作上，其餘由模型承擔，那意味著每位工程師正在駕馭遠超從前的工作量。而更不保守的解讀是：研究判斷力正在提升的早期證據——儘管今天還很微弱——說明這項能力同樣在改善。「研究品味」或許只是又一項 AI 系統暫時不行、日後終會精進的能力。", "a5_h": "可能的未來", "a5_p1": "接下來會發生什麼，取決於兩件事：趨勢是否延續，以及我們選擇如何應對。至少可以設想三種情境：", "a5_li1": "<strong>趨勢停滯，但今天的能力廣泛擴散。</strong>許多軌跡實際上可能是 S 形曲線。我們或許正接近轉折點：規模報酬遞減，曲線趨於平緩。", "a5_li2": "<strong>AI 實驗室持續獲得複利式效率增益。</strong>AI 開發大幅自動化，但人類繼續設定研究方向、評判結果。100 人的公司可能做出 10000 人組織的工作量。", "a5_li3": "<strong>AI 系統實現完整的遞迴式自我改進。</strong>如果技術趨勢延續，AI 系統能夠發展出變革性人類創造力所蘊含的能力，那麼它們就能設計並打磨自身——閉環由此合攏。", "a5_p2": "在最後一種世界裡，AI 開發的進步速度將完全由算力的可獲得性決定。人類扮演的角色大幅收縮，我們的大部分精力很可能轉向對不斷擴張的、由 AI 系統營運的「虛擬實驗室」進行監督、驗證與核查。", "a5_p3": "我們還沒有走到那一步，遞迴式自我改進也並非必然。但它到來的時間，可能比大多數機構準備得還要早。", "footer_text": "探索遞迴式自我改進的前沿。", "footer_replica_pre": "復刻者"}}</script>
 <script>
+// ===== i18n core =====
+// Static text is translated by re-injecting `[data-i18n]` innerHTML; dynamic
+// areas (benchmarks, comparison) render through t() and re-render on change.
+const __I18N_DATA = JSON.parse(document.getElementById('i18n-data').textContent);
+const __I18N_LANGS = ['en', 'zh-CN', 'zh-TW'];
+const __I18N_LABELS = { en: 'English (US)', 'zh-CN': '简体中文', 'zh-TW': '繁體中文' };
+let __I18N_LANG = 'en';
+try {
+  const saved = localStorage.getItem('rsi-lang');
+  if (__I18N_LANGS.indexOf(saved) >= 0) __I18N_LANG = saved;
+} catch (e) {}
+window.__i18n = {
+  get lang() { return __I18N_LANG; },
+  t: function(o) {
+    if (o && typeof o === 'object') return o[__I18N_LANG] || o.en || o;
+    return o;
+  },
+  fmt: function(key, vars) {
+    let s = (__I18N_DATA[__I18N_LANG] && __I18N_DATA[__I18N_LANG][key])
+         || (__I18N_DATA.en && __I18N_DATA.en[key]) || key;
+    Object.keys(vars || {}).forEach(function(k) { s = s.split('{' + k + '}').join(vars[k]); });
+    return s;
+  },
+  apply: function(next) {
+    if (__I18N_LANGS.indexOf(next) < 0) next = 'en';
+    __I18N_LANG = next;
+    try { localStorage.setItem('rsi-lang', next); } catch (e) {}
+    document.documentElement.lang = next;
+    const data = __I18N_DATA[next] || {};
+    document.querySelectorAll('[data-i18n]').forEach(function(el) {
+      const k = el.getAttribute('data-i18n');
+      if (data[k]) el.innerHTML = data[k];
+    });
+    document.querySelectorAll('[data-i18n-aria]').forEach(function(el) {
+      const k = el.getAttribute('data-i18n-aria');
+      if (data[k]) el.setAttribute('aria-label', data[k]);
+    });
+    document.querySelectorAll('[data-i18n-title]').forEach(function(el) {
+      const k = el.getAttribute('data-i18n-title');
+      if (data[k]) el.setAttribute('title', data[k]);
+    });
+    const cur = document.getElementById('lang-current');
+    if (cur) cur.textContent = __I18N_LABELS[next];
+    document.querySelectorAll('.lang-option').forEach(function(btn) {
+      btn.classList.toggle('is-current', btn.getAttribute('data-lang') === next);
+    });
+    if (window.__benchRender) window.__benchRender();
+    if (window.__compareRender) window.__compareRender();
+    window.dispatchEvent(new CustomEvent('langchange'));
+  }
+};
 // ===== Hero Canvas — The whale grows itself, layer by layer =====
 // A big whale silhouette assembled from hundreds of little whale icons.
 // A growth front starts at the whale's heart and radiates outward, lighting
@@ -1577,40 +1690,42 @@ body {
 // all at maximum reasoning effort. Percent-style benchmarks scale to 100;
 // Codeforces is an Elo rating and scales against 3500.
 (function() {
+  // trilingual helper: n('en', 'zh-CN', 'zh-TW')
+  const n = (en, zhCN, zhTW) => ({ en: en, 'zh-CN': zhCN, 'zh-TW': zhTW });
   const BENCH = {
     pro: [
-      { group: 'Coding', name: 'SWE-bench Verified', v: 80.6 },
+      { group: n('Coding', '编程', '程式設計'), name: 'SWE-bench Verified', v: 80.6 },
       { name: 'Terminal-Bench 2.1', v: 87.9 },
       { name: 'LiveCodeBench', v: 93.5 },
       { name: 'Codeforces', v: 3206, max: 3500, fmt: 'elo' },
-      { group: 'Reasoning & Knowledge', name: 'GPQA Diamond', v: 90.1 },
+      { group: n('Reasoning & Knowledge', '推理与知识', '推理與知識'), name: 'GPQA Diamond', v: 90.1 },
       { name: 'MMLU-Pro', v: 87.5 },
       { name: 'HMMT 2026 (Feb)', v: 95.2 },
       { name: 'IMO AnswerBench', v: 89.8 },
       { name: 'SimpleQA-Verified', v: 57.9 },
       { name: 'Chinese-SimpleQA', v: 84.4 },
-      { group: 'Agentic', name: "Humanity's Last Exam", v: 42.7, note: '60.0 with tools' },
+      { group: n('Agentic', '智能体', '智能體'), name: "Humanity's Last Exam", v: 42.7, note: n('60.0 with tools', '60.0（配合工具）', '60.0（搭配工具）') },
       { name: 'BrowseComp', v: 83.4 },
       { name: 'NL2Repo', v: 61.5 },
       { name: 'DeepSWE', v: 62.7 },
-      { name: 'Apex', v: 38.3, note: 'Shortlist 90.2' }
+      { name: 'Apex', v: 38.3, note: n('Shortlist 90.2', '短名单 90.2', '短名單 90.2') }
     ],
     flash: [
-      { group: 'Coding', name: 'SWE-bench Verified', v: 79.0 },
+      { group: n('Coding', '编程', '程式設計'), name: 'SWE-bench Verified', v: 79.0 },
       { name: 'Terminal-Bench 2.1', v: 82.7 },
       { name: 'LiveCodeBench', v: 91.6 },
       { name: 'Codeforces', v: 3052, max: 3500, fmt: 'elo' },
-      { group: 'Reasoning & Knowledge', name: 'GPQA Diamond', v: 88.1 },
+      { group: n('Reasoning & Knowledge', '推理与知识', '推理與知識'), name: 'GPQA Diamond', v: 88.1 },
       { name: 'MMLU-Pro', v: 86.2 },
       { name: 'HMMT 2026 (Feb)', v: 94.8 },
       { name: 'IMO AnswerBench', v: 88.4 },
       { name: 'SimpleQA-Verified', v: 34.1 },
       { name: 'Chinese-SimpleQA', v: 78.9 },
-      { group: 'Agentic', name: "Humanity's Last Exam", v: 32.6, note: '51.1 with tools' },
+      { group: n('Agentic', '智能体', '智能體'), name: "Humanity's Last Exam", v: 32.6, note: n('51.1 with tools', '51.1（配合工具）', '51.1（搭配工具）') },
       { name: 'BrowseComp', v: 73.2 },
       { name: 'NL2Repo', v: 54.2 },
       { name: 'DeepSWE', v: 54.4 },
-      { name: 'Apex', v: 33.0, note: 'Shortlist 85.7' }
+      { name: 'Apex', v: 33.0, note: n('Shortlist 85.7', '短名单 85.7', '短名單 85.7') }
     ]
   };
   const list = document.querySelector('.bench-list');
@@ -1634,7 +1749,7 @@ body {
         lastGroup = r.group;
         const g = document.createElement('p');
         g.className = 'bench-group-label';
-        g.textContent = r.group;
+        g.textContent = window.__i18n.t(r.group);
         list.appendChild(g);
       }
       const row = document.createElement('div');
@@ -1648,7 +1763,7 @@ body {
       if (r.note) {
         const note = document.createElement('span');
         note.className = 'bench-note';
-        note.textContent = r.note;
+        note.textContent = window.__i18n.t(r.note);
         top.appendChild(note);
       }
       const score = document.createElement('span');
@@ -1693,6 +1808,11 @@ body {
     moveThumb(document.querySelector('.bench-tab.is-active'));
   });
   render('pro');
+  // Language switches re-render the current tab through t()
+  window.__benchRender = function() {
+    const active = document.querySelector('.bench-tab.is-active');
+    render(active ? active.dataset.model : 'pro');
+  };
 })();
 
 // ===== Model comparison — latest flagships vs DeepSeek V4 Pro =====
@@ -1715,136 +1835,76 @@ body {
     mistral:  { logo: 'data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9Im5vIj8+PCFET0NUWVBFIHN2ZyBQVUJMSUMgIi0vL1czQy8vRFREIFNWRyAxLjEvL0VOIiAiaHR0cDovL3d3dy53My5vcmcvR3JhcGhpY3MvU1ZHLzEuMS9EVEQvc3ZnMTEuZHRkIj48c3ZnIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIHZpZXdCb3g9IjAgMCAxMjkgOTEiIHZlcnNpb249IjEuMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayIgeG1sOnNwYWNlPSJwcmVzZXJ2ZSIgeG1sbnM6c2VyaWY9Imh0dHA6Ly93d3cuc2VyaWYuY29tLyIgc3R5bGU9ImZpbGwtcnVsZTpldmVub2RkO2NsaXAtcnVsZTpldmVub2RkO3N0cm9rZS1saW5lam9pbjpyb3VuZDtzdHJva2UtbWl0ZXJsaW1pdDoyOyI+PGc+PHJlY3QgeD0iMTguMjkyIiB5PSIwIiB3aWR0aD0iMTguMjkzIiBoZWlnaHQ9IjE4LjEyMyIgc3R5bGU9ImZpbGw6I2ZmZDgwMDtmaWxsLXJ1bGU6bm9uemVybzsiLz48cmVjdCB4PSI5MS40NzMiIHk9IjAiIHdpZHRoPSIxOC4yOTMiIGhlaWdodD0iMTguMTIzIiBzdHlsZT0iZmlsbDojZmZkODAwO2ZpbGwtcnVsZTpub256ZXJvOyIvPjxyZWN0IHg9IjE4LjI5MiIgeT0iMTguMTIxIiB3aWR0aD0iMzYuNTg2IiBoZWlnaHQ9IjE4LjEyMyIgc3R5bGU9ImZpbGw6I2ZmYWYwMDtmaWxsLXJ1bGU6bm9uemVybzsiLz48cmVjdCB4PSI3My4xODEiIHk9IjE4LjEyMSIgd2lkdGg9IjM2LjU4NiIgaGVpZ2h0PSIxOC4xMjMiIHN0eWxlPSJmaWxsOiNmZmFmMDA7ZmlsbC1ydWxlOm5vbnplcm87Ii8+PHJlY3QgeD0iMTguMjkyIiB5PSIzNi4yNDMiIHdpZHRoPSI5MS40NzYiIGhlaWdodD0iMTguMTIyIiBzdHlsZT0iZmlsbDojZmY4MjA1O2ZpbGwtcnVsZTpub256ZXJvOyIvPjxyZWN0IHg9IjE4LjI5MiIgeT0iNTQuMzciIHdpZHRoPSIxOC4yOTMiIGhlaWdodD0iMTguMTIzIiBzdHlsZT0iZmlsbDojZmE1MDBmO2ZpbGwtcnVsZTpub256ZXJvOyIvPjxyZWN0IHg9IjU0Ljg4MyIgeT0iNTQuMzciIHdpZHRoPSIxOC4yOTMiIGhlaWdodD0iMTguMTIzIiBzdHlsZT0iZmlsbDojZmE1MDBmO2ZpbGwtcnVsZTpub256ZXJvOyIvPjxyZWN0IHg9IjkxLjQ3MyIgeT0iNTQuMzciIHdpZHRoPSIxOC4yOTMiIGhlaWdodD0iMTguMTIzIiBzdHlsZT0iZmlsbDojZmE1MDBmO2ZpbGwtcnVsZTpub256ZXJvOyIvPjxyZWN0IHg9IjAiIHk9IjcyLjUwNCIgd2lkdGg9IjU0Ljg5IiBoZWlnaHQ9IjE4LjEyMyIgc3R5bGU9ImZpbGw6I2UxMDUwMDtmaWxsLXJ1bGU6bm9uemVybzsiLz48cmVjdCB4PSI3My4xODEiIHk9IjcyLjUwNCIgd2lkdGg9IjU0Ljg5IiBoZWlnaHQ9IjE4LjEyMyIgc3R5bGU9ImZpbGw6I2UxMDUwMDtmaWxsLXJ1bGU6bm9uemVybzsiLz48L2c+PC9zdmc+' },
     ds:       { logo: DS_LOGO }
   };
+  // trilingual helper: N('en', 'zh-CN', 'zh-TW')
+  const N = (en, zhCN, zhTW) => ({ en: en, 'zh-CN': zhCN, 'zh-TW': zhTW });
   const COMPARE = [
     {
       name: 'SWE-bench Verified',
-      hint: 'official cards where published, otherwise third-party runs',
+      hint: N('official cards where published, otherwise third-party runs', '官方卡优先，否则为第三方跑分', '官方卡優先，否則為第三方跑分'),
       models: [
-        { name: 'GPT-5.6 Sol',        l: 'openai',    v: 96.2, color: '#10A37F', note: 'vals.ai SWE-bench run (Aug 2026); OpenAI publishes SWE-bench Pro, not Verified' },
-        { name: 'Grok 4.6',           l: 'grok',      v: 95.6, color: '#B8C4DE', note: 'vals.ai independent run (Aug 2026, ±0.92); not published by xAI' },
-        { name: 'Claude Fable 5',     l: 'anthropic', v: 95.0, color: '#D97757', note: 'Official Claude Fable 5 system card, max reasoning, 5-run average' },
-        { name: 'Kimi K3',            l: 'kimi',      v: 93.4, color: '#6C8CFF', note: 'vals.ai independent run (Aug 2026); official card reports DeepSWE instead' },
-        { name: 'Qwen3.8-Max',        l: 'qwen',      v: 85.6, color: '#00B4D8', note: 'vals.ai run (Aug 2026, Mini-SWE-agent); official card reports SWE-bench Pro 67.7' },
-        { name: 'GLM-5.2',            l: 'glm',       v: 82.8, color: '#8B5CF6', note: 'vals.ai run (Jun 2026); official card reports SWE-bench Pro 62.1' },
-        { name: 'DeepSeek V4 Pro',    l: 'ds',        v: 80.6, color: 'var(--accent)', ds: true, note: 'Official DeepSeek-V4-Pro-0813 model card' },
-        { name: 'Gemini 3.1 Pro',     l: 'google',    v: 80.6, color: '#F4B400', note: 'Official Google launch table, thinking mode on' },
-        { name: 'Mistral Large 3',    l: 'mistral',   v: 41.4, color: '#FF8A00', note: 'vals.ai run (Aug 2026, ±2.21); not published by Mistral' },
-        { name: 'Llama 4 Maverick',   l: 'meta',      v: 36.8, color: '#0668E1', note: 'OpenHands community eval (Apr 2025); Meta never published SWE-bench Verified' }
+        { name: 'GPT-5.6 Sol',        l: 'openai',    v: 96.2, color: '#10A37F', note: N('vals.ai SWE-bench run (Aug 2026); OpenAI publishes SWE-bench Pro, not Verified', 'vals.ai SWE-bench 跑分（2026 年 8 月）；OpenAI 官方发布的是 SWE-bench Pro 而非 Verified', 'vals.ai SWE-bench 跑分（2026 年 8 月）；OpenAI 官方發布的是 SWE-bench Pro 而非 Verified') },
+        { name: 'Grok 4.6',           l: 'grok',      v: 95.6, color: '#B8C4DE', note: N('vals.ai independent run (Aug 2026, ±0.92); not published by xAI', 'vals.ai 独立跑分（2026 年 8 月，±0.92）；xAI 未官方发布', 'vals.ai 獨立跑分（2026 年 8 月，±0.92）；xAI 未官方發布') },
+        { name: 'Claude Fable 5',     l: 'anthropic', v: 95.0, color: '#D97757', note: N('Official Claude Fable 5 system card, max reasoning, 5-run average', 'Claude Fable 5 官方系统卡，最高推理强度，5 次跑分平均', 'Claude Fable 5 官方系統卡，最高推理強度，5 次跑分平均') },
+        { name: 'Kimi K3',            l: 'kimi',      v: 93.4, color: '#6C8CFF', note: N('vals.ai independent run (Aug 2026); official card reports DeepSWE instead', 'vals.ai 独立跑分（2026 年 8 月）；官方卡发布的是 DeepSWE', 'vals.ai 獨立跑分（2026 年 8 月）；官方卡發布的是 DeepSWE') },
+        { name: 'Qwen3.8-Max',        l: 'qwen',      v: 85.6, color: '#00B4D8', note: N('vals.ai run (Aug 2026, Mini-SWE-agent); official card reports SWE-bench Pro 67.7', 'vals.ai 跑分（2026 年 8 月，Mini-SWE-agent）；官方卡发布 SWE-bench Pro 67.7', 'vals.ai 跑分（2026 年 8 月，Mini-SWE-agent）；官方卡發布 SWE-bench Pro 67.7') },
+        { name: 'GLM-5.2',            l: 'glm',       v: 82.8, color: '#8B5CF6', note: N('vals.ai run (Jun 2026); official card reports SWE-bench Pro 62.1', 'vals.ai 跑分（2026 年 6 月）；官方卡发布 SWE-bench Pro 62.1', 'vals.ai 跑分（2026 年 6 月）；官方卡發布 SWE-bench Pro 62.1') },
+        { name: 'DeepSeek V4 Pro',    l: 'ds',        v: 80.6, color: 'var(--accent)', ds: true, note: N('Official DeepSeek-V4-Pro-0813 model card', 'DeepSeek-V4-Pro-0813 官方模型卡', 'DeepSeek-V4-Pro-0813 官方模型卡') },
+        { name: 'Gemini 3.1 Pro',     l: 'google',    v: 80.6, color: '#F4B400', note: N('Official Google launch table, thinking mode on', 'Google 官方发布表，思考模式开启', 'Google 官方發布表，思考模式開啟') },
+        { name: 'Mistral Large 3',    l: 'mistral',   v: 41.4, color: '#FF8A00', note: N('vals.ai run (Aug 2026, ±2.21); not published by Mistral', 'vals.ai 跑分（2026 年 8 月，±2.21）；Mistral 未官方发布', 'vals.ai 跑分（2026 年 8 月，±2.21）；Mistral 未官方發布') },
+        { name: 'Llama 4 Maverick',   l: 'meta',      v: 36.8, color: '#0668E1', note: N('OpenHands community eval (Apr 2025); Meta never published SWE-bench Verified', 'OpenHands 社区评测（2025 年 4 月）；Meta 从未发布 SWE-bench Verified', 'OpenHands 社群評測（2025 年 4 月）；Meta 從未發布 SWE-bench Verified') }
       ]
     },
     {
       name: 'GPQA Diamond',
-      hint: 'official cards where published, otherwise third-party runs',
+      hint: N('official cards where published, otherwise third-party runs', '官方卡优先，否则为第三方跑分', '官方卡優先，否則為第三方跑分'),
       models: [
-        { name: 'GPT-5.6 Sol',        l: 'openai',    v: 95.2, color: '#10A37F', note: 'vals.ai run (Aug 2026); not published by OpenAI' },
-        { name: 'Grok 4.6',           l: 'grok',      v: 94.7, color: '#B8C4DE', note: 'vals.ai independent run (Aug 2026, ±1.13); xAI post claimed 94.9%' },
-        { name: 'Gemini 3.1 Pro',     l: 'google',    v: 94.3, color: '#F4B400', note: 'Official Google launch table, thinking mode on' },
-        { name: 'Kimi K3',            l: 'kimi',      v: 93.5, color: '#6C8CFF', note: 'Official Kimi K3 technical report, max reasoning effort' },
-        { name: 'Claude Fable 5',     l: 'anthropic', v: 93.2, color: '#D97757', note: 'vals.ai run (Aug 2026); falls to ~55.6% if refusals count as failures' },
-        { name: 'Qwen3.8-Max',        l: 'qwen',      v: 92.6, color: '#00B4D8', note: 'Official Qwen model card (max reasoning); AA run 92.7 corroborates' },
-        { name: 'GLM-5.2',            l: 'glm',       v: 91.2, color: '#8B5CF6', note: 'Official GLM-5.2 model card, max reasoning effort' },
-        { name: 'DeepSeek V4 Pro',    l: 'ds',        v: 90.1, color: 'var(--accent)', ds: true, note: 'Official DeepSeek-V4-Pro-0813 model card' },
-        { name: 'Llama 4 Maverick',   l: 'meta',      v: 69.8, color: '#0668E1', note: 'Official Meta card, 0-shot, t=0' },
-        { name: 'Mistral Large 3',    l: 'mistral',   v: 67.2, color: '#FF8A00', note: 'Official card, 5-shot no-CoT; vals.ai run 68.43' }
+        { name: 'GPT-5.6 Sol',        l: 'openai',    v: 95.2, color: '#10A37F', note: N('vals.ai run (Aug 2026); not published by OpenAI', 'vals.ai 跑分（2026 年 8 月）；OpenAI 未官方发布', 'vals.ai 跑分（2026 年 8 月）；OpenAI 未官方發布') },
+        { name: 'Grok 4.6',           l: 'grok',      v: 94.7, color: '#B8C4DE', note: N('vals.ai independent run (Aug 2026, ±1.13); xAI post claimed 94.9%', 'vals.ai 独立跑分（2026 年 8 月，±1.13）；xAI 官方帖子称 94.9%', 'vals.ai 獨立跑分（2026 年 8 月，±1.13）；xAI 官方貼文稱 94.9%') },
+        { name: 'Gemini 3.1 Pro',     l: 'google',    v: 94.3, color: '#F4B400', note: N('Official Google launch table, thinking mode on', 'Google 官方发布表，思考模式开启', 'Google 官方發布表，思考模式開啟') },
+        { name: 'Kimi K3',            l: 'kimi',      v: 93.5, color: '#6C8CFF', note: N('Official Kimi K3 technical report, max reasoning effort', 'Kimi K3 官方技术报告，最高推理强度', 'Kimi K3 官方技術報告，最高推理強度') },
+        { name: 'Claude Fable 5',     l: 'anthropic', v: 93.2, color: '#D97757', note: N('vals.ai run (Aug 2026); falls to ~55.6% if refusals count as failures', 'vals.ai 跑分（2026 年 8 月）；若拒答计为失败则降至约 55.6%', 'vals.ai 跑分（2026 年 8 月）；若拒答計為失敗則降至約 55.6%') },
+        { name: 'Qwen3.8-Max',        l: 'qwen',      v: 92.6, color: '#00B4D8', note: N('Official Qwen model card (max reasoning); AA run 92.7 corroborates', 'Qwen 官方模型卡（最高推理）；AA 跑分 92.7 佐证', 'Qwen 官方模型卡（最高推理）；AA 跑分 92.7 佐證') },
+        { name: 'GLM-5.2',            l: 'glm',       v: 91.2, color: '#8B5CF6', note: N('Official GLM-5.2 model card, max reasoning effort', 'GLM-5.2 官方模型卡，最高推理强度', 'GLM-5.2 官方模型卡，最高推理強度') },
+        { name: 'DeepSeek V4 Pro',    l: 'ds',        v: 90.1, color: 'var(--accent)', ds: true, note: N('Official DeepSeek-V4-Pro-0813 model card', 'DeepSeek-V4-Pro-0813 官方模型卡', 'DeepSeek-V4-Pro-0813 官方模型卡') },
+        { name: 'Llama 4 Maverick',   l: 'meta',      v: 69.8, color: '#0668E1', note: N('Official Meta card, 0-shot, t=0', 'Meta 官方卡，0-shot，t=0', 'Meta 官方卡，0-shot，t=0') },
+        { name: 'Mistral Large 3',    l: 'mistral',   v: 67.2, color: '#FF8A00', note: N('Official card, 5-shot no-CoT; vals.ai run 68.43', '官方卡，5-shot 无 CoT；vals.ai 跑分 68.43', '官方卡，5-shot 無 CoT；vals.ai 跑分 68.43') }
       ]
     },
     {
       name: 'MMLU-Pro',
-      hint: 'no lab publishes this on their card; all figures third-party',
+      hint: N('no lab publishes this on their card; all figures third-party', '各实验室均未在官方卡发布此项，全部为第三方数据', '各實驗室均未在官方卡發布此項，全部為第三方數據'),
       models: [
-        { name: 'Claude Fable 5',     l: 'anthropic', v: 91.5, color: '#D97757', note: 'vals.ai MMLU-Pro leaderboard, Aug 2026' },
-        { name: 'Gemini 3.1 Pro',     l: 'google',    v: 91.0, color: '#F4B400', note: 'hokai.io run (official card has MMMU-Pro 80.5, different test)' },
-        { name: 'Grok 4.6',           l: 'grok',      v: 89.4, color: '#B8C4DE', note: 'vals.ai independent run (Aug 2026, ±0.30)' },
-        { name: 'GPT-5.6 Sol',        l: 'openai',    v: 89.1, color: '#10A37F', note: 'vals.ai run (Aug 2026); not published by OpenAI' },
-        { name: 'Qwen3.8-Max',        l: 'qwen',      v: 88.6, color: '#00B4D8', note: 'vals.ai run (Aug 2026, 5-shot CoT)' },
-        { name: 'Kimi K3',            l: 'kimi',      v: 88.0, color: '#6C8CFF', note: 'vals.ai run (Aug 2026, max reasoning)' },
-        { name: 'DeepSeek V4 Pro',    l: 'ds',        v: 87.5, color: 'var(--accent)', ds: true, note: 'Official DeepSeek-V4-Pro-0813 model card' },
-        { name: 'GLM-5.2',            l: 'glm',       v: 86.7, color: '#8B5CF6', note: 'vals.ai run (Jun 2026, ±0.33)' },
-        { name: 'Llama 4 Maverick',   l: 'meta',      v: 80.5, color: '#0668E1', note: 'Official Meta card, 0-shot, t=0' },
-        { name: 'Mistral Large 3',    l: 'mistral',   v: 79.8, color: '#FF8A00', note: 'vals.ai run (Dec 2025, ±0.47)' }
+        { name: 'Claude Fable 5',     l: 'anthropic', v: 91.5, color: '#D97757', note: N('vals.ai MMLU-Pro leaderboard, Aug 2026', 'vals.ai MMLU-Pro 榜单，2026 年 8 月', 'vals.ai MMLU-Pro 榜單，2026 年 8 月') },
+        { name: 'Gemini 3.1 Pro',     l: 'google',    v: 91.0, color: '#F4B400', note: N('hokai.io run (official card has MMMU-Pro 80.5, different test)', 'hokai.io 跑分（官方卡发布的是 MMMU-Pro 80.5，属不同测试）', 'hokai.io 跑分（官方卡發布的是 MMMU-Pro 80.5，屬不同測試）') },
+        { name: 'Grok 4.6',           l: 'grok',      v: 89.4, color: '#B8C4DE', note: N('vals.ai independent run (Aug 2026, ±0.30)', 'vals.ai 独立跑分（2026 年 8 月，±0.30）', 'vals.ai 獨立跑分（2026 年 8 月，±0.30）') },
+        { name: 'GPT-5.6 Sol',        l: 'openai',    v: 89.1, color: '#10A37F', note: N('vals.ai run (Aug 2026); not published by OpenAI', 'vals.ai 跑分（2026 年 8 月）；OpenAI 未官方发布', 'vals.ai 跑分（2026 年 8 月）；OpenAI 未官方發布') },
+        { name: 'Qwen3.8-Max',        l: 'qwen',      v: 88.6, color: '#00B4D8', note: N('vals.ai run (Aug 2026, 5-shot CoT)', 'vals.ai 跑分（2026 年 8 月，5-shot CoT）', 'vals.ai 跑分（2026 年 8 月，5-shot CoT）') },
+        { name: 'Kimi K3',            l: 'kimi',      v: 88.0, color: '#6C8CFF', note: N('vals.ai run (Aug 2026, max reasoning)', 'vals.ai 跑分（2026 年 8 月，最高推理）', 'vals.ai 跑分（2026 年 8 月，最高推理）') },
+        { name: 'DeepSeek V4 Pro',    l: 'ds',        v: 87.5, color: 'var(--accent)', ds: true, note: N('Official DeepSeek-V4-Pro-0813 model card', 'DeepSeek-V4-Pro-0813 官方模型卡', 'DeepSeek-V4-Pro-0813 官方模型卡') },
+        { name: 'GLM-5.2',            l: 'glm',       v: 86.7, color: '#8B5CF6', note: N('vals.ai run (Jun 2026, ±0.33)', 'vals.ai 跑分（2026 年 6 月，±0.33）', 'vals.ai 跑分（2026 年 6 月，±0.33）') },
+        { name: 'Llama 4 Maverick',   l: 'meta',      v: 80.5, color: '#0668E1', note: N('Official Meta card, 0-shot, t=0', 'Meta 官方卡，0-shot，t=0', 'Meta 官方卡，0-shot，t=0') },
+        { name: 'Mistral Large 3',    l: 'mistral',   v: 79.8, color: '#FF8A00', note: N('vals.ai run (Dec 2025, ±0.47)', 'vals.ai 跑分（2025 年 12 月，±0.47）', 'vals.ai 跑分（2025 年 12 月，±0.47）') }
       ]
     },
     {
       name: 'Terminal-Bench',
-      hint: 'versions vary (1.0–3.0) — not directly comparable',
+      hint: N('versions vary (1.0–3.0) — not directly comparable', '版本不一（1.0–3.0）——不可直接比较', '版本不一（1.0–3.0）——不可直接比較'),
       models: [
-        { name: 'GPT-5.6 Sol',        l: 'openai',    v: 88.8, color: '#10A37F', note: 'Terminal-Bench 2.1, official card, max reasoning, single agent' },
-        { name: 'Kimi K3',            l: 'kimi',      v: 88.3, color: '#6C8CFF', note: 'Terminal-Bench 2.1, official technical report, Kimi Code harness' },
-        { name: 'DeepSeek V4 Pro',    l: 'ds',        v: 87.9, color: 'var(--accent)', ds: true, note: 'Terminal-Bench 2.1, official model card' },
-        { name: 'Qwen3.8-Max',        l: 'qwen',      v: 86.6, color: '#00B4D8', note: 'Terminal-Bench 2.1, official card, Claude Code harness; vals.ai run 67.4' },
-        { name: 'Claude Fable 5',     l: 'anthropic', v: 84.3, color: '#D97757', note: 'Terminal-Bench 2.1, official system card (safety fallback drags it down)' },
-        { name: 'GLM-5.2',            l: 'glm',       v: 81.0, color: '#8B5CF6', note: 'Terminal-Bench 2.1, official card, Terminus-2 harness' },
-        { name: 'Gemini 3.1 Pro',     l: 'google',    v: 70.7, color: '#F4B400', note: 'Terminal-Bench 2.1, tbench.ai leaderboard, best harness' },
-        { name: 'Grok 4.6',           l: 'grok',      v: 26.0, color: '#B8C4DE', note: 'Terminal-Bench v3.0, official xAI launch table — a newer, harder version' },
-        { name: 'Llama 4 Maverick',   l: 'meta',      v: 15.5, color: '#0668E1', note: 'Terminal-Bench 1.0, tbench.ai leaderboard (May 2025) — older, easier version' },
-        { name: 'Mistral Large 3',    l: 'mistral',   v: 9.0,  color: '#FF8A00', note: 'Terminal-Bench 2.0, vals.ai leaderboard (Jun 2026)' }
+        { name: 'GPT-5.6 Sol',        l: 'openai',    v: 88.8, color: '#10A37F', note: N('Terminal-Bench 2.1, official card, max reasoning, single agent', 'Terminal-Bench 2.1，官方卡，最高推理，单智能体', 'Terminal-Bench 2.1，官方卡，最高推理，單智能體') },
+        { name: 'Kimi K3',            l: 'kimi',      v: 88.3, color: '#6C8CFF', note: N('Terminal-Bench 2.1, official technical report, Kimi Code harness', 'Terminal-Bench 2.1，官方技术报告，Kimi Code 工具链', 'Terminal-Bench 2.1，官方技術報告，Kimi Code 工具鏈') },
+        { name: 'DeepSeek V4 Pro',    l: 'ds',        v: 87.9, color: 'var(--accent)', ds: true, note: N('Terminal-Bench 2.1, official model card', 'Terminal-Bench 2.1，官方模型卡', 'Terminal-Bench 2.1，官方模型卡') },
+        { name: 'Qwen3.8-Max',        l: 'qwen',      v: 86.6, color: '#00B4D8', note: N('Terminal-Bench 2.1, official card, Claude Code harness; vals.ai run 67.4', 'Terminal-Bench 2.1，官方卡，Claude Code 工具链；vals.ai 跑分 67.4', 'Terminal-Bench 2.1，官方卡，Claude Code 工具鏈；vals.ai 跑分 67.4') },
+        { name: 'Claude Fable 5',     l: 'anthropic', v: 84.3, color: '#D97757', note: N('Terminal-Bench 2.1, official system card (safety fallback drags it down)', 'Terminal-Bench 2.1，官方系统卡（安全回退拉低分数）', 'Terminal-Bench 2.1，官方系統卡（安全回退拉低分數）') },
+        { name: 'GLM-5.2',            l: 'glm',       v: 81.0, color: '#8B5CF6', note: N('Terminal-Bench 2.1, official card, Terminus-2 harness', 'Terminal-Bench 2.1，官方卡，Terminus-2 工具链', 'Terminal-Bench 2.1，官方卡，Terminus-2 工具鏈') },
+        { name: 'Gemini 3.1 Pro',     l: 'google',    v: 70.7, color: '#F4B400', note: N('Terminal-Bench 2.1, tbench.ai leaderboard, best harness', 'Terminal-Bench 2.1，tbench.ai 榜单，最佳工具链', 'Terminal-Bench 2.1，tbench.ai 榜單，最佳工具鏈') },
+        { name: 'Grok 4.6',           l: 'grok',      v: 26.0, color: '#B8C4DE', note: N('Terminal-Bench v3.0, official xAI launch table — a newer, harder version', 'Terminal-Bench v3.0，xAI 官方发布表——更新、更难的版本', 'Terminal-Bench v3.0，xAI 官方發布表——更新、更難的版本') },
+        { name: 'Llama 4 Maverick',   l: 'meta',      v: 15.5, color: '#0668E1', note: N('Terminal-Bench 1.0, tbench.ai leaderboard (May 2025) — older, easier version', 'Terminal-Bench 1.0，tbench.ai 榜单（2025 年 5 月）——更旧、更易的版本', 'Terminal-Bench 1.0，tbench.ai 榜單（2025 年 5 月）——更舊、更易的版本') },
+        { name: 'Mistral Large 3',    l: 'mistral',   v: 9.0,  color: '#FF8A00', note: N('Terminal-Bench 2.0, vals.ai leaderboard (Jun 2026)', 'Terminal-Bench 2.0，vals.ai 榜单（2026 年 6 月）', 'Terminal-Bench 2.0，vals.ai 榜單（2026 年 6 月）') }
       ]
     }
   ];
   const grid = document.querySelector('.compare-grid');
   if (!grid || !COMPARE.length) return;
-  COMPARE.forEach(function(b) {
-    const card = document.createElement('div');
-    card.className = 'compare-card';
-    const h = document.createElement('h3');
-    h.textContent = b.name;
-    if (b.hint) {
-      const hint = document.createElement('span');
-      hint.className = 'compare-hint';
-      hint.textContent = b.hint;
-      h.appendChild(hint);
-    }
-    card.appendChild(h);
-    const sorted = b.models.slice().sort(function(a, b) {
-      const av = (a.v == null) ? -1 : a.v;
-      const bv = (b.v == null) ? -1 : b.v;
-      return bv - av; // highest first; unpublished (—) sink to the bottom
-    });
-    sorted.forEach(function(m) {
-      const row = document.createElement('div');
-      row.className = 'compare-row' + (m.ds ? ' is-ds' : '');
-      const img = document.createElement('img');
-      const lref = m.l ? L[m.l] : null;
-      img.className = 'compare-logo' + (lref && lref.inv ? ' logo-invert' : '');
-      img.src = lref ? lref.logo : m.logo; img.alt = m.name;
-      // Logos are inlined data URIs (already in the HTML), so eager avoids a
-      // decode flash when the compare grid scrolls into view.
-      img.loading = 'eager';
-      const name = document.createElement('span');
-      name.className = 'compare-name';
-      name.textContent = m.name;
-      if (m.ds) {
-        const badge = document.createElement('span');
-        badge.className = 'compare-badge';
-        badge.textContent = 'No. ' + (sorted.indexOf(m) + 1);
-        name.appendChild(badge);
-      }
-      const track = document.createElement('div');
-      track.className = 'compare-track';
-      const bar = document.createElement('div');
-      bar.className = 'compare-bar';
-      bar.style.setProperty('--bar-color', m.color);
-      // Bar length equals the displayed score: 96.2% renders as 96.2% of the
-      // track, so the full track always means 100 — not the top score.
-      bar.style.setProperty('--bar-ratio', m.v == null ? '0' : Math.min(1, Math.max(0.02, m.v / 100)).toFixed(4));
-      track.appendChild(bar);
-      const score = document.createElement('span');
-      score.className = 'compare-score';
-      if (m.v == null) {
-        score.textContent = '—';      // lab didn't publish this benchmark
-        bar.style.opacity = '0.12';
-      } else {
-        score.textContent = m.fmt === 'elo'
-          ? m.v.toLocaleString('en-US') + ' Elo'
-          : (m.fmt === 'int' ? m.v.toFixed(0) + '%' : m.v.toFixed(1) + '%');
-      }
-      if (m.note) { score.title = m.note; }
-      row.append(img, name, track, score);
-      card.appendChild(row);
-    });
-    grid.appendChild(card);
-  });
-  // Bars scale in when the card scrolls into view
   const io = new IntersectionObserver(function(entries) {
     entries.forEach(function(en) {
       if (!en.isIntersecting) return;
@@ -1852,7 +1912,74 @@ body {
       io.unobserve(en.target);
     });
   }, { threshold: 0.25 });
-  grid.querySelectorAll('.compare-card').forEach(function(c) { io.observe(c); });
+  function renderCompare() {
+    grid.innerHTML = '';
+    COMPARE.forEach(function(b) {
+      const card = document.createElement('div');
+      card.className = 'compare-card';
+      const h = document.createElement('h3');
+      h.textContent = b.name;
+      if (b.hint) {
+        const hint = document.createElement('span');
+        hint.className = 'compare-hint';
+        hint.textContent = window.__i18n.t(b.hint);
+        h.appendChild(hint);
+      }
+      card.appendChild(h);
+      const sorted = b.models.slice().sort(function(a, b) {
+        const av = (a.v == null) ? -1 : a.v;
+        const bv = (b.v == null) ? -1 : b.v;
+        return bv - av; // highest first; unpublished (—) sink to the bottom
+      });
+      sorted.forEach(function(m) {
+        const row = document.createElement('div');
+        row.className = 'compare-row' + (m.ds ? ' is-ds' : '');
+        const img = document.createElement('img');
+        const lref = m.l ? L[m.l] : null;
+        img.className = 'compare-logo' + (lref && lref.inv ? ' logo-invert' : '');
+        img.src = lref ? lref.logo : m.logo; img.alt = m.name;
+        // Logos are inlined data URIs (already in the HTML), so eager avoids a
+        // decode flash when the compare grid scrolls into view.
+        img.loading = 'eager';
+        const name = document.createElement('span');
+        name.className = 'compare-name';
+        name.textContent = m.name;
+        if (m.ds) {
+          const badge = document.createElement('span');
+          badge.className = 'compare-badge';
+          badge.textContent = window.__i18n.fmt('cmp_rank', { n: sorted.indexOf(m) + 1 });
+          name.appendChild(badge);
+        }
+        const track = document.createElement('div');
+        track.className = 'compare-track';
+        const bar = document.createElement('div');
+        bar.className = 'compare-bar';
+        bar.style.setProperty('--bar-color', m.color);
+        // Bar length equals the displayed score: 96.2% renders as 96.2% of the
+        // track, so the full track always means 100 — not the top score.
+        bar.style.setProperty('--bar-ratio', m.v == null ? '0' : Math.min(1, Math.max(0.02, m.v / 100)).toFixed(4));
+        track.appendChild(bar);
+        const score = document.createElement('span');
+        score.className = 'compare-score';
+        if (m.v == null) {
+          score.textContent = '—';      // lab didn't publish this benchmark
+          bar.style.opacity = '0.12';
+        } else {
+          score.textContent = m.fmt === 'elo'
+            ? m.v.toLocaleString('en-US') + ' Elo'
+            : (m.fmt === 'int' ? m.v.toFixed(0) + '%' : m.v.toFixed(1) + '%');
+        }
+        if (m.note) { score.title = window.__i18n.t(m.note); }
+        row.append(img, name, track, score);
+        card.appendChild(row);
+      });
+      grid.appendChild(card);
+    });
+    // Bars scale in when the card scrolls into view
+    grid.querySelectorAll('.compare-card').forEach(function(c) { io.observe(c); });
+  }
+  window.__compareRender = renderCompare;
+  renderCompare();
 })();
 
 // ===== Timeline Scroll Controller =====
@@ -1957,6 +2084,47 @@ body {
     window.dispatchEvent(new CustomEvent('themechange'));
     try { localStorage.setItem('ds-theme', next); } catch (e) {}
     setTimeout(function() { html.classList.remove('theme-anim'); }, 600);
+  });
+})();
+
+// ===== Language switcher + initial apply =====
+(function() {
+  // Apply the saved language on load (skip 'en' — that is the baked-in default)
+  if (__I18N_LANG !== 'en') window.__i18n.apply(__I18N_LANG);
+  const sw = document.getElementById('lang-switch');
+  if (!sw) return;
+  const trig = document.getElementById('lang-trigger');
+  const menu = document.getElementById('lang-menu');
+  function close() {
+    sw.classList.remove('open');
+    trig.setAttribute('aria-expanded', 'false');
+  }
+  trig.addEventListener('click', function(e) {
+    e.stopPropagation();
+    const open = sw.classList.toggle('open');
+    trig.setAttribute('aria-expanded', String(open));
+  });
+  menu.addEventListener('click', function(e) {
+    const btn = e.target.closest('.lang-option');
+    if (!btn) { close(); return; }
+    if (!btn.classList.contains('is-current')) {
+      window.__i18n.apply(btn.getAttribute('data-lang'));
+    }
+    close();
+  });
+  document.addEventListener('click', function(e) {
+    if (!sw.contains(e.target)) close();
+  });
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') close();
+  });
+  menu.addEventListener('keydown', function(e) {
+    if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+    e.preventDefault();
+    const opts = Array.prototype.slice.call(menu.querySelectorAll('.lang-option'));
+    const idx = opts.indexOf(document.activeElement);
+    const next = (idx + (e.key === 'ArrowDown' ? 1 : opts.length - 1)) % opts.length;
+    opts[next].focus();
   });
 })();
 
