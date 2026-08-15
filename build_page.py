@@ -1101,10 +1101,10 @@ body {
   const PITCH = CS + GAP;
   const RADIUS = CS * 0.18;  // rounded corners
 
-  // Growth-loop cadence: ~1.5s grow, ~3.5s hold, ~1.5s erase, repeat
-  const TICK_MS = 70;        // ms between growth steps
-  const GROW_RATE = 0.6;     // front advance per tick (in cells) — steady linear wave
-  const HOLD_TICKS = 50;     // full-whale hold duration (~3.5s)
+  // Growth-loop cadence: ~0.9s grow, ~2.3s hold, ~0.9s erase, repeat
+  const TICK_MS = 60;        // ms between growth steps
+  const GROW_RATE = 0.85;    // front advance per tick (in cells) — steady linear wave
+  const HOLD_TICKS = 38;     // full-whale hold duration (~2.3s)
 
   let w, h, cols, rows;
   let mx = -999, my = -999, tmx = -999, tmy = -999;
