@@ -4,7 +4,6 @@ import json, re, sys
 sys.stdout.reconfigure(encoding='utf-8')
 
 BASE = 'D:/ClaudeCode/deepseek-rsi/'
-node_rects = json.load(open(BASE + 'node-rects-v2.json'))
 whale = json.load(open(BASE + 'whale-hero.json'))
 syms = json.load(open(BASE + 'symbols-ds.json'))
 whale_path = json.load(open(BASE + 'whale-path.json'))['path']
@@ -135,13 +134,14 @@ def build_timeline_svg():
                 parts.append(f'<text x="{ix}" y="{y+65}" text-anchor="middle" class="micro icon-label">{label}</text>')
                 parts.append('</g>')
 
-        # End node with whale pixels (no circle wrapper — the pixel cluster
-        # stands alone. The CSS .node-pop handles the pop-in scale animation;
-        # an inner group applies the fixed 1.35 enlargement about its center.
+        # End node with the official vector whale mark — each lane ends in the
+        # real DeepSeek logo, shrinking as the loop compounds (same rhythm the
+        # old pixel densities had). .node-pop handles the pop-in scale.
+        node_scales = [2.8, 2.4, 2.0, 1.6, 1.2]
         parts.append(f'<g class="node-end node-{li}">')
         parts.append('<g class="node-pop">')
-        parts.append(f'<g transform="translate(515 {y}) scale(1.35) translate(-515 -{y})">')
-        parts.append(node_rects[node_key[li]])
+        parts.append(f'<g transform="translate(515 {y}) scale({node_scales[li]}) translate(-13.5 -10.5)">')
+        parts.append(f'<path class="node-whale" d="{whale_path}"/>')
         parts.append('</g>')
         parts.append('</g>')
         parts.append('</g>')
@@ -307,13 +307,19 @@ body {
 .site-header {
   position: fixed; top: 0; left: 0; right: 0; z-index: 100;
   padding: 14px var(--page-margin);
-  background: color-mix(in srgb, var(--bg-page) 72%, transparent);
-  backdrop-filter: saturate(180%) blur(20px);
-  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  background: color-mix(in srgb, var(--bg-page) 55%, transparent);
+  backdrop-filter: saturate(220%) blur(28px);
+  -webkit-backdrop-filter: saturate(220%) blur(28px);
   border-bottom: 1px solid transparent;
-  transition: border-color 0.3s ease, background 0.3s ease;
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--text-primary) 7%, transparent);
+  transition: border-color 0.3s ease, background 0.3s ease, box-shadow 0.3s ease;
 }
-.site-header.scrolled { border-bottom-color: var(--border-subtle); background: color-mix(in srgb, var(--bg-page) 88%, transparent); }
+.site-header.scrolled {
+  border-bottom-color: var(--border-subtle);
+  background: color-mix(in srgb, var(--bg-page) 76%, transparent);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--text-primary) 6%, transparent),
+              0 8px 32px -12px color-mix(in srgb, var(--bg-page) 60%, transparent);
+}
 .header-inner { max-width: 1400px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; }
 .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text-primary); }
 .logo-icon { width: 28px; height: 21px; flex-shrink: 0; color: var(--accent); }
@@ -401,8 +407,8 @@ body {
 .hero-btn::before {
   content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
   background: radial-gradient(210px circle at var(--mx, 50%) var(--my, 50%),
-              color-mix(in srgb, var(--wash) 22%, transparent),
-              color-mix(in srgb, var(--wash) 8%, transparent) 52%,
+              color-mix(in srgb, var(--wash) var(--wash-a, 30%), transparent),
+              color-mix(in srgb, var(--wash) calc(var(--wash-a, 30%) * 0.35), transparent) 52%,
               transparent 72%);
   opacity: 0; transition: opacity 0.3s ease; z-index: 1;
 }
@@ -445,12 +451,15 @@ body {
   --edge-glow: var(--accent);
   --comet-color: #fff;   /* bright comet so it reads against the accent fill */
   --wash: #fff;          /* white follow-light on the accent fill */
+  --wash-a: 12%;         /* solid fill is already bright — keep the light subtle */
   box-shadow: 0 0 12px -4px color-mix(in srgb, var(--accent) 45%, transparent);
 }
 .hero-btn--primary::after { opacity: 0.55; }
 @media (hover: hover) and (pointer: fine) {
   .hero-btn:hover::before { opacity: 1; }
-  .hero-btn:hover::after { opacity: 1; }
+  /* On hover the orbiting comet takes over the edge — drop the static ring so
+     the two never stack. */
+  .hero-btn:hover::after { opacity: 0; }
   .hero-btn:hover .btn-comet { opacity: 1; }
   .hero-btn:hover {
     border-color: var(--accent); --edge-glow: var(--accent);
@@ -536,7 +545,7 @@ body {
 }
 
 /* End node whale assembles */
-.node-end rect { transition: opacity 0.3s ease; }
+.node-whale { fill: var(--accent); transition: opacity 0.3s ease; }
 .node-pop {
   transform: scale(0);
   transition: transform 0.55s var(--ease-out-expo), opacity 0.4s ease;
@@ -546,8 +555,8 @@ body {
   transform: scale(1);
   opacity: 1;
 }
-.node-end:not(.inactive) rect { opacity: 1; }
-.node-end.inactive rect { opacity: 0.12; }
+.node-end:not(.inactive) .node-whale { opacity: 1; }
+.node-end.inactive .node-whale { opacity: 0.12; }
 
 .icon-label {
   font-family: var(--font-sans); font-size: 9px; font-weight: 500;
@@ -620,20 +629,86 @@ body {
   margin: 0 0 36px; max-width: 620px;
 }
 .bench-tabs {
-  display: inline-flex; gap: 4px; padding: 4px; margin-bottom: 36px;
-  border-radius: 999px; background: var(--bg-elevated);
+  position: relative; display: inline-flex; gap: 4px; padding: 4px; margin-bottom: 36px;
+  border-radius: 999px;
+  /* Stronger glass: a visible top-to-bottom gradient with its own blur layer,
+     so the bar reads as a floating pane instead of a flat chip. */
+  background: linear-gradient(180deg,
+              color-mix(in srgb, var(--bg-surface) 95%, transparent) 0%,
+              color-mix(in srgb, var(--bg-surface) 52%, transparent) 100%);
+  backdrop-filter: blur(18px) saturate(180%); -webkit-backdrop-filter: blur(18px) saturate(180%);
   border: 1px solid var(--border-subtle);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--text-primary) 10%, transparent),
+              0 8px 28px -10px color-mix(in srgb, #000 50%, transparent);
+}
+/* Sliding active pill. JS animates translateX + width with outCubic, so
+   switching models reads as one smooth slide, not two color fades. */
+.bench-thumb {
+  position: absolute; left: 4px; top: 4px; bottom: 4px; width: 0;
+  border-radius: 999px; pointer-events: none; z-index: 0;
+  background: linear-gradient(180deg, var(--accent-bright) 0%, var(--accent) 100%);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, #fff 30%, transparent),
+              0 4px 16px -2px color-mix(in srgb, var(--accent) 60%, transparent),
+              0 2px 6px -1px color-mix(in srgb, var(--accent) 45%, transparent);
+  transition: transform 0.6s cubic-bezier(0.215, 0.61, 0.355, 1),
+              width 0.6s cubic-bezier(0.215, 0.61, 0.355, 1);
 }
 .bench-tab {
+  position: relative; z-index: 1;
   padding: 9px 22px; border: none; border-radius: 999px; cursor: pointer;
   background: transparent; color: var(--text-secondary);
   font-family: var(--font-sans); font-size: 14px; font-weight: 500;
-  transition: color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+  --wash: var(--accent); --comet-color: var(--accent);
+  transition: color 0.25s ease, text-shadow 0.25s ease,
+              transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1),
+              box-shadow 0.25s ease;
+  will-change: transform;
+}
+.bench-tab .bench-tab-label { position: relative; z-index: 2; }
+/* Cursor follow-wash — same mechanism as .hero-btn::before */
+.bench-tab::before {
+  content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  background: radial-gradient(180px circle at var(--mx, 50%) var(--my, 50%),
+              color-mix(in srgb, var(--wash) 32%, transparent),
+              color-mix(in srgb, var(--wash) 12%, transparent) 52%,
+              transparent 72%);
+  opacity: 0; transition: opacity 0.3s ease;
+}
+/* Orbiting comet on the tab ring — same conic-gradient + xor mask as .btn-comet */
+.bench-tab::after {
+  content: ''; position: absolute; inset: 0; border-radius: inherit; padding: 2px;
+  pointer-events: none;
+  background: conic-gradient(from var(--spin, 0deg),
+    color-mix(in srgb, var(--comet-color) 100%, transparent) 0deg,
+    color-mix(in srgb, var(--comet-color) 32%, transparent) 55deg,
+    transparent 120deg,
+    transparent 215deg,
+    color-mix(in srgb, var(--comet-color) 32%, transparent) 265deg,
+    color-mix(in srgb, var(--comet-color) 100%, transparent) 360deg);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  opacity: 0; transition: opacity 0.35s ease;
 }
 .bench-tab:hover { color: var(--text-primary); }
 .bench-tab.is-active {
-  background: var(--accent); color: #fff;
-  box-shadow: 0 2px 14px -2px color-mix(in srgb, var(--accent) 55%, transparent);
+  color: #fff; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.28);
+  --comet-color: #fff; --wash: #fff; /* bright comet reads on the accent pill */
+}
+@media (hover: hover) and (pointer: fine) {
+  .bench-tab:hover::before { opacity: 1; }
+  .bench-tab:hover::after { opacity: 1; }
+  .bench-tab:hover {
+    transform: translateY(-1px); /* lift reads as a physical key */
+    box-shadow: 0 3px 10px -3px color-mix(in srgb, var(--accent) 30%, transparent);
+  }
+}
+.bench-tab:active { transform: scale(0.96); }
+.bench-tab:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) {
+  .bench-tab::after { display: none; }
+  .bench-thumb { transition: none; }
 }
 .bench-group-label {
   font-size: 12px; font-weight: 500; letter-spacing: 0.07em;
@@ -648,7 +723,7 @@ body {
   margin-left: auto; font-size: 15px; font-weight: 500;
   color: var(--text-primary); font-variant-numeric: tabular-nums;
 }
-.bench-track { height: 6px; border-radius: 3px; background: var(--bg-elevated); overflow: hidden; }
+.bench-track { height: 6px; border-radius: 3px; background: var(--bg-surface); overflow: hidden; }
 .bench-bar {
   height: 100%; width: 0; border-radius: 3px;
   background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 50%, transparent), var(--accent));
@@ -661,6 +736,72 @@ body {
 .bench-footnote a:hover { text-decoration: underline; }
 @media (prefers-reduced-motion: reduce) {
   .bench-bar { transition: none; }
+}
+
+/* ===== Model comparison — latest flagships vs DeepSeek V4 Pro ===== */
+.compare { padding: 96px 24px; position: relative; }
+.compare-inner { max-width: 920px; margin: 0 auto; }
+.compare-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 4px;
+}
+@media (max-width: 780px) { .compare-grid { grid-template-columns: 1fr; } }
+.compare-card {
+  background: linear-gradient(180deg,
+              color-mix(in srgb, var(--bg-surface) 72%, transparent) 0%,
+              color-mix(in srgb, var(--bg-surface) 38%, transparent) 100%);
+  border: 1px solid var(--border-subtle); border-radius: 18px; padding: 20px;
+  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--text-primary) 6%, transparent);
+}
+.compare-card h3 {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
+  margin: 0 0 14px; font-size: 15px; font-weight: 600; color: var(--text-primary);
+}
+.compare-card h3 .compare-hint { font-size: 12px; font-weight: 400; color: var(--text-tertiary); }
+.compare-row {
+  display: flex; align-items: center; gap: 10px; padding: 10px 0;
+}
+.compare-row + .compare-row { border-top: 1px solid var(--border-subtle); }
+/* DeepSeek row: accent halo so the home team pops out of the pack */
+.compare-row.is-ds {
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  margin: 0 -12px; padding: 10px 12px; border-radius: 12px;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 40%, transparent),
+              inset 0 0 24px color-mix(in srgb, var(--accent) 14%, transparent);
+}
+.compare-logo {
+  width: 28px; height: 28px; flex: 0 0 28px; border-radius: 9px;
+  object-fit: contain; padding: 3px; background: #fff;
+  border: 1px solid var(--border-subtle);
+}
+.compare-name {
+  font-size: 14px; font-weight: 500; color: var(--text-primary);
+  white-space: nowrap; flex: 0 0 auto; max-width: 150px; overflow: hidden;
+  text-overflow: ellipsis;
+}
+.compare-name .compare-badge {
+  display: inline-block; margin-left: 6px; padding: 1px 7px; border-radius: 999px;
+  font-size: 10.5px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase;
+  background: var(--accent); color: #fff; vertical-align: 1px;
+}
+.compare-track {
+  flex: 1 1 auto; height: 7px; border-radius: 4px; overflow: hidden;
+  background: color-mix(in srgb, var(--text-primary) 8%, transparent);
+}
+.compare-bar {
+  height: 100%; width: 100%; border-radius: 4px;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--bar-color) 55%, transparent), var(--bar-color));
+  transform: scaleX(0); transform-origin: left;
+  transition: transform 0.8s cubic-bezier(0.23, 1, 0.32, 1);
+}
+.compare-card.entered .compare-bar { transform: scaleX(1); }
+.compare-score {
+  flex: 0 0 auto; font-size: 14px; font-weight: 600;
+  color: var(--text-primary); font-variant-numeric: tabular-nums; min-width: 52px; text-align: right;
+}
+.compare-row.is-ds .compare-score { color: var(--accent-bright); }
+@media (prefers-reduced-motion: reduce) {
+  .compare-bar { transition: none; transform: scaleX(1); }
 }
 
 /* ===== Article ===== */
@@ -678,23 +819,23 @@ body {
   color: var(--text-primary);
 }
 .article p {
-  font-family: var(--font-serif); font-size: clamp(16px, 1.8vw, 17px);
+  font-family: var(--font-sans); font-size: clamp(16px, 1.8vw, 17px);
   line-height: 1.75; color: var(--text-secondary); margin-bottom: 20px;
 }
 .article p strong { color: var(--text-primary); font-weight: 600; }
 .article em { font-style: italic; }
 .article ul { margin: 0 0 20px 24px; }
 .article li {
-  font-family: var(--font-serif); font-size: 16px; line-height: 1.7;
+  font-family: var(--font-sans); font-size: 16px; line-height: 1.7;
   color: var(--text-secondary); margin-bottom: 12px;
 }
 .article li strong { color: var(--text-primary); }
 .article hr { border: none; border-top: 1px solid var(--border-subtle); margin: 56px 0; }
 .article blockquote {
-  font-family: var(--font-serif); font-size: clamp(24px, 3.5vw, 36px);
-  font-weight: 400; line-height: 1.4; color: var(--text-primary);
+  font-family: var(--font-sans); font-size: clamp(24px, 3.5vw, 36px);
+  font-weight: 500; line-height: 1.4; color: var(--text-primary);
   border-left: 3px solid var(--accent); padding: 8px 0 8px 24px;
-  margin: 48px 0; font-style: italic;
+  margin: 48px 0;
 }
 .article blockquote p { font-size: inherit; line-height: inherit; margin-bottom: 0; }
 
@@ -876,11 +1017,23 @@ body {
     <h2 class="bench-title">DeepSeek V4, measured</h2>
     <p class="bench-sub">Every score below is quoted from DeepSeek's own model cards and the V4 technical report — all at maximum reasoning effort. Toggle between the two members of the V4 family.</p>
     <div class="bench-tabs" role="tablist" aria-label="Benchmark model toggle">
-      <button class="bench-tab is-active" data-model="pro" role="tab" aria-selected="true">DeepSeek V4 Pro</button>
-      <button class="bench-tab" data-model="flash" role="tab" aria-selected="false">DeepSeek V4 Flash</button>
+      <span class="bench-thumb" aria-hidden="true"></span>
+      <button class="bench-tab is-active" data-model="pro" role="tab" aria-selected="true"><span class="bench-tab-label">DeepSeek V4 Pro</span></button>
+      <button class="bench-tab" data-model="flash" role="tab" aria-selected="false"><span class="bench-tab-label">DeepSeek V4 Flash</span></button>
     </div>
     <div class="bench-list" aria-live="polite"></div>
     <p class="bench-footnote">Sources: the <a href="https://huggingface.co/deepseek-ai/DeepSeek-V4-Pro-0813" target="_blank" rel="noopener noreferrer">DeepSeek-V4-Pro model card</a>, the <a href="https://huggingface.co/deepseek-ai/DeepSeek-V4-Flash-0731" target="_blank" rel="noopener noreferrer">DeepSeek-V4-Flash model card</a>, and the <a href="https://arxiv.org/abs/2606.19348" target="_blank" rel="noopener noreferrer">V4 technical report</a>. This page is an unofficial replica — scores are shown for entertainment and education only.</p>
+  </div>
+</section>
+
+<!-- Model comparison -->
+<section class="compare" id="compare">
+  <div class="compare-inner">
+    <p class="bench-eyebrow">Against the field</p>
+    <h2 class="bench-title">How V4 stacks up</h2>
+    <p class="bench-sub">Latest flagship scores from each lab's own publications, next to DeepSeek V4 Pro. Bars are color-coded per lab and the DeepSeek row is highlighted. Eval conditions differ between labs, so read this as a rough sketch, not a ranking.</p>
+    <div class="compare-grid" id="compare-grid"></div>
+    <p class="bench-footnote">Sources: each lab's official model card or launch post; the DeepSeek row quotes the DeepSeek-V4-Pro model card. This page is an unofficial replica — scores are shown for entertainment and education only.</p>
   </div>
 </section>
 
@@ -1387,13 +1540,13 @@ body {
   requestAnimationFrame(loop);
 })();
 
-// ===== Hero buttons — soft follow-light + orbiting edge comet =====
+// ===== Buttons & bench tabs — soft follow-light + orbiting edge comet =====
 // One light trails the cursor smoothly (lerped in a rAF loop); --mx/--my drive
 // the inner wash (::before) while hovering. While the pointer stays over the
-// button, --spin advances continuously in the same loop, so the comet that
+// element, --spin advances continuously in the same loop, so the comet that
 // orbits the edge ring never restarts or jumps when hover begins.
 (function() {
-  const btns = document.querySelectorAll('.hero-btn');
+  const btns = document.querySelectorAll('.hero-btn, .bench-tab');
   btns.forEach(function(btn) {
     const target = { x: -999, y: -999 };
     const cur = { x: -999, y: -999 };
@@ -1477,8 +1630,18 @@ body {
     ]
   };
   const list = document.querySelector('.bench-list');
+  const track = document.querySelector('.bench-tabs');
+  const thumb = document.querySelector('.bench-thumb');
   const tabs = document.querySelectorAll('.bench-tab');
   let animTimer = [];
+  // Slide the accent pill under the active tab (outCubic via CSS transition).
+  // Baseline is the first tab's rect, so border/padding offsets cancel out.
+  function moveThumb(t) {
+    const base = tabs[0].getBoundingClientRect();
+    const r = t.getBoundingClientRect();
+    thumb.style.width = r.width + 'px';
+    thumb.style.transform = 'translateX(' + (r.left - base.left) + 'px)';
+  }
   function render(model) {
     list.innerHTML = '';
     let lastGroup = '';
@@ -1537,10 +1700,75 @@ body {
       });
       t.classList.add('is-active');
       t.setAttribute('aria-selected', 'true');
+      moveThumb(t);
       render(t.dataset.model);
     });
   });
+  moveThumb(document.querySelector('.bench-tab.is-active'));
+  window.addEventListener('resize', function() {
+    moveThumb(document.querySelector('.bench-tab.is-active'));
+  });
   render('pro');
+})();
+
+// ===== Model comparison — latest flagships vs DeepSeek V4 Pro =====
+// COMPARE: one entry per benchmark; each lists models with {name, logo, v,
+// max?, fmt?, color}. Rows marked ds get the accent halo + badge.
+(function() {
+  const COMPARE = [];  // populated by the build script
+  const grid = document.querySelector('.compare-grid');
+  if (!grid || !COMPARE.length) return;
+  COMPARE.forEach(function(b) {
+    const card = document.createElement('div');
+    card.className = 'compare-card';
+    const h = document.createElement('h3');
+    h.textContent = b.name;
+    if (b.hint) {
+      const hint = document.createElement('span');
+      hint.className = 'compare-hint';
+      hint.textContent = b.hint;
+      h.appendChild(hint);
+    }
+    card.appendChild(h);
+    b.models.forEach(function(m) {
+      const row = document.createElement('div');
+      row.className = 'compare-row' + (m.ds ? ' is-ds' : '');
+      const img = document.createElement('img');
+      img.className = 'compare-logo'; img.src = m.logo; img.alt = m.name;
+      img.loading = 'lazy';
+      const name = document.createElement('span');
+      name.className = 'compare-name';
+      name.textContent = m.name;
+      if (m.ds) {
+        const badge = document.createElement('span');
+        badge.className = 'compare-badge'; badge.textContent = 'V4 Pro';
+        name.appendChild(badge);
+      }
+      const track = document.createElement('div');
+      track.className = 'compare-track';
+      const bar = document.createElement('div');
+      bar.className = 'compare-bar';
+      bar.style.setProperty('--bar-color', m.color);
+      track.appendChild(bar);
+      const score = document.createElement('span');
+      score.className = 'compare-score';
+      score.textContent = m.fmt === 'elo'
+        ? m.v.toLocaleString('en-US') + ' Elo'
+        : (m.fmt === 'int' ? m.v.toFixed(0) + '%' : m.v.toFixed(1) + '%');
+      row.append(img, name, track, score);
+      card.appendChild(row);
+    });
+    grid.appendChild(card);
+  });
+  // Bars scale in when the card scrolls into view
+  const io = new IntersectionObserver(function(entries) {
+    entries.forEach(function(en) {
+      if (!en.isIntersecting) return;
+      en.target.classList.add('entered');
+      io.unobserve(en.target);
+    });
+  }, { threshold: 0.25 });
+  grid.querySelectorAll('.compare-card').forEach(function(c) { io.observe(c); });
 })();
 
 // ===== Timeline Scroll Controller =====
