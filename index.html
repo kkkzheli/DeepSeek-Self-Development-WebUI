@@ -433,6 +433,66 @@ body {
   transition: color 0.25s ease;
 }
 
+/* ===== Benchmarks leaderboard ===== */
+.benchmarks { padding: 96px 0 128px; }
+.benchmarks-inner { max-width: 760px; margin: 0 auto; padding: 0 var(--page-margin); }
+.bench-eyebrow {
+  font-size: 13px; font-weight: 500; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--text-tertiary); margin: 0 0 16px;
+}
+.bench-title {
+  font-size: clamp(28px, 3.8vw, 40px); font-weight: 600;
+  letter-spacing: -0.02em; line-height: 1.15; margin: 0 0 14px;
+  color: var(--text-primary);
+}
+.bench-sub {
+  font-size: 17px; line-height: 1.55; color: var(--text-secondary);
+  margin: 0 0 36px; max-width: 620px;
+}
+.bench-tabs {
+  display: inline-flex; gap: 4px; padding: 4px; margin-bottom: 36px;
+  border-radius: 999px; background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+}
+.bench-tab {
+  padding: 9px 22px; border: none; border-radius: 999px; cursor: pointer;
+  background: transparent; color: var(--text-secondary);
+  font-family: var(--font-sans); font-size: 14px; font-weight: 500;
+  transition: color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+}
+.bench-tab:hover { color: var(--text-primary); }
+.bench-tab.is-active {
+  background: var(--accent); color: #fff;
+  box-shadow: 0 2px 14px -2px color-mix(in srgb, var(--accent) 55%, transparent);
+}
+.bench-group-label {
+  font-size: 12px; font-weight: 500; letter-spacing: 0.07em;
+  text-transform: uppercase; color: var(--text-tertiary);
+  margin: 28px 0 4px;
+}
+.bench-row { padding: 12px 0; border-top: 1px solid var(--border-subtle); }
+.bench-row-top { display: flex; align-items: baseline; gap: 10px; margin-bottom: 8px; }
+.bench-name { font-size: 15px; font-weight: 500; color: var(--text-primary); }
+.bench-note { font-size: 12.5px; color: var(--text-tertiary); }
+.bench-score {
+  margin-left: auto; font-size: 15px; font-weight: 500;
+  color: var(--text-primary); font-variant-numeric: tabular-nums;
+}
+.bench-track { height: 6px; border-radius: 3px; background: var(--bg-elevated); overflow: hidden; }
+.bench-bar {
+  height: 100%; width: 0; border-radius: 3px;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 50%, transparent), var(--accent));
+  transition: width 0.9s cubic-bezier(0.23, 1, 0.32, 1);
+}
+.bench-footnote {
+  margin-top: 32px; font-size: 13px; line-height: 1.6; color: var(--text-tertiary);
+}
+.bench-footnote a { color: var(--accent); text-decoration: none; }
+.bench-footnote a:hover { text-decoration: underline; }
+@media (prefers-reduced-motion: reduce) {
+  .bench-bar { transition: none; }
+}
+
 /* ===== Article ===== */
 .article { padding: 96px 0; }
 .article-inner { max-width: 760px; margin: 0 auto; padding: 0 var(--page-margin); }
@@ -800,6 +860,21 @@ body {
       </div>
 
     </div>
+  </div>
+</section>
+
+<!-- Benchmarks -->
+<section class="benchmarks" id="benchmarks">
+  <div class="benchmarks-inner">
+    <p class="bench-eyebrow">Benchmarks</p>
+    <h2 class="bench-title">DeepSeek V4, measured</h2>
+    <p class="bench-sub">Every score below is quoted from DeepSeek's own model cards and the V4 technical report — all at maximum reasoning effort. Toggle between the two members of the V4 family.</p>
+    <div class="bench-tabs" role="tablist" aria-label="Benchmark model toggle">
+      <button class="bench-tab is-active" data-model="pro" role="tab" aria-selected="true">DeepSeek V4 Pro</button>
+      <button class="bench-tab" data-model="flash" role="tab" aria-selected="false">DeepSeek V4 Flash</button>
+    </div>
+    <div class="bench-list" aria-live="polite"></div>
+    <p class="bench-footnote">Sources: the <a href="https://huggingface.co/deepseek-ai/DeepSeek-V4-Pro-0813" target="_blank" rel="noopener noreferrer">DeepSeek-V4-Pro model card</a>, the <a href="https://huggingface.co/deepseek-ai/DeepSeek-V4-Flash-0731" target="_blank" rel="noopener noreferrer">DeepSeek-V4-Flash model card</a>, and the <a href="https://arxiv.org/abs/2606.19348" target="_blank" rel="noopener noreferrer">V4 technical report</a>. This page is an unofficial replica — scores are shown for entertainment and education only.</p>
   </div>
 </section>
 
@@ -1354,6 +1429,115 @@ body {
   });
 })();
 
+
+// ===== Benchmarks leaderboard =====
+// Scores from DeepSeek's own GA model cards (DeepSeek-V4-Pro-0813 /
+// DeepSeek-V4-Flash-0731) and the V4 technical report (arXiv:2606.19348),
+// all at maximum reasoning effort. Percent-style benchmarks scale to 100;
+// Codeforces is an Elo rating and scales against 3500.
+(function() {
+  const BENCH = {
+    pro: [
+      { group: 'Coding', name: 'SWE-bench Verified', v: 80.6 },
+      { name: 'Terminal-Bench 2.1', v: 87.9 },
+      { name: 'LiveCodeBench', v: 93.5 },
+      { name: 'Codeforces', v: 3206, max: 3500, fmt: 'elo' },
+      { group: 'Reasoning & Knowledge', name: 'GPQA Diamond', v: 90.1 },
+      { name: 'MMLU-Pro', v: 87.5 },
+      { name: 'HMMT 2026 (Feb)', v: 95.2 },
+      { name: 'IMO AnswerBench', v: 89.8 },
+      { name: 'SimpleQA-Verified', v: 57.9 },
+      { name: 'Chinese-SimpleQA', v: 84.4 },
+      { group: 'Agentic', name: "Humanity's Last Exam", v: 42.7, note: '60.0 with tools' },
+      { name: 'BrowseComp', v: 83.4 },
+      { name: 'NL2Repo', v: 61.5 },
+      { name: 'DeepSWE', v: 62.7 },
+      { name: 'Apex', v: 38.3, note: 'Shortlist 90.2' }
+    ],
+    flash: [
+      { group: 'Coding', name: 'SWE-bench Verified', v: 79.0 },
+      { name: 'Terminal-Bench 2.1', v: 82.7 },
+      { name: 'LiveCodeBench', v: 91.6 },
+      { name: 'Codeforces', v: 3052, max: 3500, fmt: 'elo' },
+      { group: 'Reasoning & Knowledge', name: 'GPQA Diamond', v: 88.1 },
+      { name: 'MMLU-Pro', v: 86.2 },
+      { name: 'HMMT 2026 (Feb)', v: 94.8 },
+      { name: 'IMO AnswerBench', v: 88.4 },
+      { name: 'SimpleQA-Verified', v: 34.1 },
+      { name: 'Chinese-SimpleQA', v: 78.9 },
+      { group: 'Agentic', name: "Humanity's Last Exam", v: 37.8, note: '51.5 with tools' },
+      { name: 'BrowseComp', v: 73.2 },
+      { name: 'NL2Repo', v: 54.2 },
+      { name: 'DeepSWE', v: 54.4 },
+      { name: 'Apex', v: 33.0, note: 'Shortlist 85.7' }
+    ]
+  };
+  const list = document.querySelector('.bench-list');
+  const tabs = document.querySelectorAll('.bench-tab');
+  let animTimer = [];
+  function render(model) {
+    list.innerHTML = '';
+    let lastGroup = '';
+    BENCH[model].forEach(function(r) {
+      if (r.group && r.group !== lastGroup) {
+        lastGroup = r.group;
+        const g = document.createElement('p');
+        g.className = 'bench-group-label';
+        g.textContent = r.group;
+        list.appendChild(g);
+      }
+      const row = document.createElement('div');
+      row.className = 'bench-row';
+      const top = document.createElement('div');
+      top.className = 'bench-row-top';
+      const name = document.createElement('span');
+      name.className = 'bench-name';
+      name.textContent = r.name;
+      top.appendChild(name);
+      if (r.note) {
+        const note = document.createElement('span');
+        note.className = 'bench-note';
+        note.textContent = r.note;
+        top.appendChild(note);
+      }
+      const score = document.createElement('span');
+      score.className = 'bench-score';
+      score.textContent = r.fmt === 'elo' ? r.v.toLocaleString('en-US') + ' Elo' : r.v.toFixed(1) + '%';
+      top.appendChild(score);
+      const track = document.createElement('div');
+      track.className = 'bench-track';
+      const bar = document.createElement('div');
+      bar.className = 'bench-bar';
+      bar.dataset.w = (r.v / (r.max || 100) * 100).toFixed(1);
+      track.appendChild(bar);
+      row.appendChild(top);
+      row.appendChild(track);
+      list.appendChild(row);
+    });
+    animTimer.forEach(clearTimeout);
+    animTimer = [];
+    requestAnimationFrame(function() {
+      list.querySelectorAll('.bench-bar').forEach(function(b, i) {
+        animTimer.push(setTimeout(function() {
+          b.style.width = b.dataset.w + '%';
+        }, 60 + i * 40));
+      });
+    });
+  }
+  tabs.forEach(function(t) {
+    t.addEventListener('click', function() {
+      if (t.classList.contains('is-active')) return;
+      tabs.forEach(function(x) {
+        x.classList.remove('is-active');
+        x.setAttribute('aria-selected', 'false');
+      });
+      t.classList.add('is-active');
+      t.setAttribute('aria-selected', 'true');
+      render(t.dataset.model);
+    });
+  });
+  render('pro');
+})();
 
 // ===== Timeline Scroll Controller =====
 (function() {
