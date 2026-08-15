@@ -138,8 +138,8 @@ body {
   position: fixed; top: 0; left: 0; right: 0; z-index: 100;
   padding: 14px var(--page-margin);
   background: color-mix(in srgb, var(--bg-page) 38%, transparent);
-  backdrop-filter: saturate(300%) blur(40px);
-  -webkit-backdrop-filter: saturate(300%) blur(40px);
+  backdrop-filter: saturate(300%) blur(24px);
+  -webkit-backdrop-filter: saturate(300%) blur(24px);
   border-bottom: 1px solid transparent;
   box-shadow: inset 0 1px 0 color-mix(in srgb, var(--text-primary) 8%, transparent);
   transition: border-color 0.3s ease, background 0.3s ease, box-shadow 0.3s ease;
@@ -1121,7 +1121,7 @@ body {
     </div>
     <div class="footer-tag">
       <p class="footer-text" data-i18n="footer_text">Exploring the frontier of recursive self-improvement.</p>
-      <p class="footer-replica"><span data-i18n="footer_replica_pre">Replica by</span> <a href="https://github.com/kkkzheli" target="_blank" rel="noopener noreferrer">kkkzheli</a> · <a href="https://github.com/kkkzheli" target="_blank" rel="noopener noreferrer">github.com/kkkzheli</a></p>
+      <p class="footer-replica"><span data-i18n="footer_replica_pre">Replica by</span> <a href="https://github.com/kkkzheli" target="_blank" rel="noopener noreferrer">kkkzheli</a> · <a href="https://github.com/kkkzheli/DeepSeek-Self-Development-WebUI" target="_blank" rel="noopener noreferrer">DeepSeek-Self-Development-WebUI</a></p>
     </div>
   </div>
 </footer>
@@ -1334,8 +1334,10 @@ window.__i18n = {
     } else if (collapsing) {
       // collapsing: the outer rim goes dark first and the surviving region
       // shrinks toward the heart, so the whale deflates into itself — the
-      // rim dissolves slowly, picks up, then vanishes softly at the center
-      const p = (cycle - holdEnd) / collapseTicks;
+      // rim dissolves slowly, picks up, then vanishes softly at the center.
+      // Clamp p at 1: past it cos(π·p) swings back, the wavefront retreats,
+      // and heart cells stop fading — stranded at a mid alpha forever.
+      const p = Math.min(1, (cycle - holdEnd) / collapseTicks);
       const depth = frontMax * (1 - Math.cos(Math.PI * p)) / 2;
       for (const key in cells) {
         const cell = cells[key];
