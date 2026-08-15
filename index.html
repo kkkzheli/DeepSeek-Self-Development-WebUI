@@ -526,7 +526,7 @@ body {
 .bench-track { height: 7px; border-radius: 4px; background: var(--bg-surface); overflow: hidden; }
 .bench-bar {
   height: 100%; width: 0; border-radius: 4px;
-  background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 50%, transparent), var(--accent));
+  background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 22%, transparent), var(--accent));
   transition: width 0.9s cubic-bezier(0.23, 1, 0.32, 1);
 }
 .bench-footnote {
@@ -596,18 +596,18 @@ body {
 }
 .compare-bar {
   height: 100%; width: 100%; border-radius: 4px;
-  background: linear-gradient(90deg, color-mix(in srgb, var(--bar-color) 55%, transparent), var(--bar-color));
+  background: linear-gradient(90deg, color-mix(in srgb, var(--bar-color) 25%, transparent), var(--bar-color));
   transform: scaleX(0); transform-origin: left;
   transition: transform 0.8s cubic-bezier(0.23, 1, 0.32, 1);
 }
-.compare-card.entered .compare-bar { transform: scaleX(1); }
+.compare-card.entered .compare-bar { transform: scaleX(var(--bar-ratio, 1)); }
 .compare-score {
   flex: 0 0 auto; font-size: 14px; font-weight: 600;
   color: var(--text-primary); font-variant-numeric: tabular-nums; min-width: 52px; text-align: right;
 }
 .compare-row.is-ds .compare-score { color: var(--accent-bright); }
 @media (prefers-reduced-motion: reduce) {
-  .compare-bar { transition: none; transform: scaleX(1); }
+  .compare-bar { transition: none; transform: scaleX(var(--bar-ratio, 1)); }
 }
 
 /* ===== Article ===== */
@@ -1089,10 +1089,10 @@ body {
   const PITCH = CS + GAP;
   const RADIUS = CS * 0.18;  // rounded corners
 
-  // Growth-loop cadence (fast: ~1.5s grow, ~2s hold, quick dissolve, repeat)
+  // Growth-loop cadence: ~2s grow, ~3.5s hold, quick dissolve, repeat
   const TICK_MS = 70;        // ms between growth steps
-  const GROW_RATE = 1.5;     // front advance per tick (in cells) — snappy left-to-right sweep
-  const HOLD_TICKS = 34;     // full-whale hold duration (~2.4s)
+  const GROW_RATE = 1.5;     // average front advance per tick (in cells) — radial wave
+  const HOLD_TICKS = 50;     // full-whale hold duration (~3.5s)
 
   let w, h, cols, rows;
   let mx = -999, my = -999, tmx = -999, tmy = -999;
@@ -1186,14 +1186,11 @@ body {
         whaleCells.push({ gx: ax, gy: ay });
         whaleSet[ax + ',' + ay] = true;
       }
-    // Light the whale from its head (leftmost cell) sweeping toward the tail, so
-    // the left end is never missing while the growth front is still advancing.
-    let minGx = Infinity, maxGx = -Infinity;
-    whaleCells.forEach(function(c) {
-      if (c.gx < minGx) minGx = c.gx;
-      if (c.gx > maxGx) maxGx = c.gx;
-    });
-    whaleCells.forEach(function(c) { c.dist = c.gx - minGx; });
+    // Radiate outward from the whale's heart (its geometric center): the wave
+    // expands in every direction at once, so the fins, head and tail appear
+    // together as the front swells past them.
+    const ccx = ox + wW / 2, ccy = oy + wH / 2;
+    whaleCells.forEach(function(c) { c.dist = Math.hypot(c.gx - ccx, c.gy - ccy); });
     whaleOrder = whaleCells.slice().sort(function(a, b) { return a.dist - b.dist || a.gy - b.gy; });
     frontMax = whaleOrder.length ? whaleOrder[whaleOrder.length - 1].dist : 1;
 
@@ -1212,8 +1209,10 @@ body {
     const growTicks = Math.ceil(frontMax / GROW_RATE);
     const dissolving = cycle > growTicks + HOLD_TICKS;
     if (cycle < growTicks) {
-      // growing: front radiates outward from the whale's heart
-      front = Math.min(frontMax, front + GROW_RATE);
+      // growing: the front swells with an ease-in-out wave — slow burst from
+      // the heart, full speed through the body, gentle settle at the fins
+      const p = cycle / growTicks;
+      front = frontMax * (1 - Math.cos(Math.PI * p)) / 2;
     } else if (dissolving) {
       // dissolving: fade everything out, then start a fresh cycle
       for (const key in cells) {
@@ -1221,6 +1220,8 @@ body {
         if (cells[key].a <= 0.02) delete cells[key];
       }
       if (!Object.keys(cells).length) { front = 0; cycle = 0; }
+    } else {
+      front = frontMax;
     }
     if (dissolving) return;  // don't re-light cells mid-dissolve
     // light cells whose distance <= front, and fade ones behind
@@ -1229,7 +1230,8 @@ body {
       const key = c.gx + ',' + c.gy;
       const target = c.dist <= front ? 1 : 0;
       if (target === 1) {
-        if (!cells[key]) cells[key] = { a: pickAlpha(), phase: Math.random() * 6.28 };
+        if (!cells[key]) cells[key] = { a: 0.12, ta: pickAlpha(), phase: Math.random() * 6.28 };
+        else if (cells[key].a < cells[key].ta) cells[key].a = Math.min(cells[key].ta, cells[key].a + 0.22);
       } else if (cells[key] && cycle < growTicks) {
         // fade out cells behind the front
         cells[key].a -= 0.08;
@@ -1781,11 +1783,13 @@ body {
       h.appendChild(hint);
     }
     card.appendChild(h);
-    b.models.slice().sort(function(a, b) {
+    const sorted = b.models.slice().sort(function(a, b) {
       const av = (a.v == null) ? -1 : a.v;
       const bv = (b.v == null) ? -1 : b.v;
       return bv - av; // highest first; unpublished (—) sink to the bottom
-    }).forEach(function(m) {
+    });
+    const maxV = sorted.reduce(function(acc, m) { return (m.v != null && m.v > acc) ? m.v : acc; }, 0);
+    sorted.forEach(function(m) {
       const row = document.createElement('div');
       row.className = 'compare-row' + (m.ds ? ' is-ds' : '');
       const img = document.createElement('img');
@@ -1806,6 +1810,7 @@ body {
       const bar = document.createElement('div');
       bar.className = 'compare-bar';
       bar.style.setProperty('--bar-color', m.color);
+      bar.style.setProperty('--bar-ratio', m.v == null ? '0' : Math.max(0.02, m.v / maxV).toFixed(4));
       track.appendChild(bar);
       const score = document.createElement('span');
       score.className = 'compare-score';
