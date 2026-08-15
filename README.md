@@ -6,11 +6,13 @@ An animated, single-page **fan-made replica** of [Anthropic's "When AI builds it
 
 ## ✨ Highlights
 
-- **Living hero** — a recursive cellular automaton that breeds cells outward and collapses them back into the DeepSeek whale, over and over, like the compounding AI loop it describes.
+- **Living hero** — a recursive cellular automaton that breeds cells outward and collapses them back into the DeepSeek whale, over and over, like the compounding AI loop it describes. Cursor proximity glows, click bursts particles, drag leaves a trail.
+- **🌐 Trilingual** — switch 简体中文 / 繁體中文 / English (US) from the header dropdown at any time; the whole page (including benchmark notes and comparison footnotes) re-renders in place, and your choice is remembered across visits.
 - **Benchmark leaderboard** — SWE-bench Verified, GPQA Diamond, MMLU-Pro and more, toggleable between DeepSeek V4 Pro and V4 Flash (data sourced from official DeepSeek publications, with links).
+- **Flagship comparison** — every benchmark card ranks DeepSeek V4 Pro against the latest flagships (GPT-5.6 Sol, Claude Fable 5, Gemini 3.1 Pro, Grok 4.6, Qwen3.8-Max, Kimi K3, GLM-5.2, Mistral Large 3, Llama 4 Maverick), with source notes on each score (official model cards where published, otherwise third-party runs).
 - **Scroll timeline** — the SVG grows lane by lane as you scroll; each node assembles a progressively finer pixel-art whale, ending in the "AI designing the AIs that design the AIs" loopback.
 - **Real-time adaptive layout** — the hero re-flows instantly when the viewport is squeezed by overlays or browser UI (no manual refresh needed).
-- **Official logo** — the DeepSeek whale mark extracted from deepseek.com is used in the header, hero, and footer.
+- **Single self-contained file** — all logos, fonts, icons and artwork are inlined as data URIs; `index.html` alone has zero network dependencies.
 - **PWA** — installable on any phone/desktop, works offline.
 
 ## 🚀 Open
