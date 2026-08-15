@@ -1122,12 +1122,10 @@ body {
   let whaleSet = {};     // "gx,gy" -> true
 
   // ---- Animation state ----
-  // phase: 'grow' (front radiates outward) → 'hold' (full whale) → 'erase'
-  // (front retreats inward, heart first) → repeat
+  // phase: 'grow' (front radiates outward) → 'hold' (full whale) → 'collapse'
+  // (outer rim retreats inward) → repeat
   let cells = {};        // "gx,gy" -> {a, ta, phase, dist}
   let front = 0;         // current growth-front radius (in cells)
-  let eraseFront = 0;    // current erase-front radius: cells closer to the
-                         // heart than this are being extinguished
   let frontMax = 1;
   let cycle = 0;         // ticks spent in current phase
   let lastTick = 0;
@@ -1211,7 +1209,6 @@ body {
 
     cells = {};
     front = 0;
-    eraseFront = 0;
     cycle = 0;
   }
 
@@ -1223,29 +1220,32 @@ body {
   function step() {
     cycle += 1;
     const growTicks = Math.ceil(frontMax / GROW_RATE);
-    const eraseTicks = Math.ceil(frontMax / GROW_RATE);
+    const collapseTicks = Math.ceil(frontMax / GROW_RATE);
     const holdEnd = growTicks + HOLD_TICKS;
-    const erasing = cycle > holdEnd;
+    const collapsing = cycle > holdEnd;
     if (cycle < growTicks) {
-      // growing: the front expands at a steady linear pace — one ring of
-      // cells after another, like a ripple spreading across the whale
-      front = Math.min(frontMax, front + GROW_RATE);
-    } else if (erasing) {
-      // erasing: the front retreats back toward the heart, so the whale
-      // collapses inward — the center goes dark first, the outer rim last
-      eraseFront = Math.min(frontMax, eraseFront + GROW_RATE);
+      // growing: the front swells with an ease-in-out wave — a smooth,
+      // fluid ripple gathering speed through the body, then settling
+      const p = cycle / growTicks;
+      front = frontMax * (1 - Math.cos(Math.PI * p)) / 2;
+    } else if (collapsing) {
+      // collapsing: the outer rim goes dark first and the surviving region
+      // shrinks toward the heart, so the whale deflates into itself — the
+      // rim dissolves slowly, picks up, then vanishes softly at the center
+      const p = (cycle - holdEnd) / collapseTicks;
+      const depth = frontMax * (1 - Math.cos(Math.PI * p)) / 2;
       for (const key in cells) {
         const cell = cells[key];
-        if (cell.dist <= eraseFront) {
+        if (cell.dist >= frontMax - depth) {
           cell.a -= 0.28;
           if (cell.a <= 0.02) delete cells[key];
         }
       }
-      if (!Object.keys(cells).length) { front = 0; eraseFront = 0; cycle = 0; }
+      if (!Object.keys(cells).length) { front = 0; cycle = 0; }
     } else {
       front = frontMax;
     }
-    if (erasing) return;  // don't re-light cells while the whale collapses
+    if (collapsing) return;  // don't re-light cells while the whale deflates
     // light cells whose distance <= front, and fade ones behind
     for (let i = 0; i < whaleOrder.length; i++) {
       const c = whaleOrder[i];
