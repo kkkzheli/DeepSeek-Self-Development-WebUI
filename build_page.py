@@ -31,6 +31,29 @@ def _font_face_css():
     return '\n'.join(out)
 FONT_CSS = _font_face_css()
 
+# ---- Lab logos for the compare section, inlined as data URIs so the page is ----
+# fully self-contained: no runtime network dependency. Files live in
+# assets/logos/ (downloaded once); if a file is missing, falls back to the
+# original remote URL so the build still succeeds.
+def _logo_uri(fname, mime):
+    _p = BASE + 'assets/logos/' + fname
+    try:
+        with open(_p, 'rb') as _f:
+            return 'data:%s;base64,%s' % (mime, base64.b64encode(_f.read()).decode())
+    except IOError:
+        return None
+_LOGO_FILES = [
+    ('openai',    'openai.svg',  'image/svg+xml'),
+    ('anthropic', 'claude.svg',  'image/svg+xml'),
+    ('google',    'google.svg',  'image/svg+xml'),
+    ('meta',      'meta.svg',    'image/svg+xml'),
+    ('qwen',      'qwen.svg',    'image/svg+xml'),
+    ('kimi',      'kimi.webp',   'image/webp'),
+    ('glm',       'glm.svg',     'image/svg+xml'),
+    ('mistral',   'mistral.svg', 'image/svg+xml'),
+]
+LOGO_URIS = {_k: _logo_uri(_f, _m) for _k, _f, _m in _LOGO_FILES}
+
 # ---- Replace the Claude spark glyph inside the icon symbols with the DeepSeek whale ----
 # The asterisk path in each icon is Anthropic's spark mark. Swap it for the whale so
 # no Claude logo appears in any icon. The whale is centered on the CONTAINER element
@@ -1714,15 +1737,15 @@ body {
 (function() {
   const DS_LOGO = 'DATAURI_DEEPSEEK_LOGO';
   const L = {
-    openai:   { logo: 'https://upload.wikimedia.org/wikipedia/commons/6/66/OpenAI_logo_2025_%28symbol%29.svg', inv: true },
-    anthropic:{ logo: 'https://upload.wikimedia.org/wikipedia/commons/b/b0/Claude_AI_symbol.svg' },
-    google:   { logo: 'https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg' },
+    openai:   { logo: 'LOGO_URI_OPENAI', inv: true },
+    anthropic:{ logo: 'LOGO_URI_ANTHROPIC' },
+    google:   { logo: 'LOGO_URI_GOOGLE' },
     grok:     { logo: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzNCAzMiI+PHBhdGggZD0iTTEzLjM3NCAyMC41NDA3TDI0LjQ1NTUgMTIuMzUwNkMyNC45OTg4IDExLjk0OTEgMjUuNzc1MyAxMi4xMDU3IDI2LjAzNDIgMTIuNzI5NEMyNy4zOTY2IDE2LjAxODUgMjYuNzg3OSAxOS45NzEyIDI0LjA3NzIgMjIuNjg1MUMyMS4zNjY2IDI1LjM5ODkgMTcuNTk1IDI1Ljk5NDEgMTQuMTQ3NyAyNC42Mzg2TDEwLjM4MTggMjYuMzg0M0MxNS43ODMyIDMwLjA4MDYgMjIuMzQyMiAyOS4xNjY1IDI2LjQ0MDkgMjUuMDYwMUMyOS42OTIgMjEuODA1MSAzMC42OTg5IDE3LjM2ODMgMjkuNzU3NCAxMy4zNjczTDI5Ljc2NTkgMTMuMzc1OEMyOC40MDA2IDcuNDk4MDkgMzAuMTAxNiA1LjE0ODcxIDMzLjU4NTkgMC4zNDQ1NzZDMzMuNjY4MyAwLjIzMDY2NyAzMy43NTA4IDAuMTE2NzU3IDMzLjgzMzMgMEwyOS4yNDgyIDQuNTkwNTVWNC41NzYzMUwxMy4zNzEyIDIwLjU0MzYiIGZpbGw9ImJsYWNrIi8+PHBhdGggZD0iTTExLjA4NjcgMjIuNTMxMkM3LjIwOTc5IDE4LjgyMzQgNy44NzgyMSAxMy4wODUyIDExLjE4NjIgOS43NzYxOEMxMy42MzIzIDcuMzI3MSAxNy42NCA2LjMyNzU1IDIxLjEzODUgNy43OTY5OEwyNC44OTU5IDYuMDU5ODZDMjQuMjE5IDUuNTcwMDUgMjMuMzUxNCA1LjA0MzIyIDIyLjM1NTkgNC42NzMwMUMxNy44NTYyIDIuODE5MTQgMTIuNDY5IDMuNzQxOCA4LjgxMTE1IDcuNDAxMTRDNS4yOTI3MSAxMC45MjM4IDQuMTg2MjYgMTYuMzQwMiA2LjA4NjI4IDIwLjk2MjFDNy41MDU2IDI0LjQxNjQgNS4xNzg5MyAyNi44NTk3IDIuODM1MiAyOS4zMjU5QzIuMDA0NjUgMzAuMjAwMSAxLjE3MTI2IDMxLjA3NDQgMC41IDMxLjk5OTlMMTEuMDgzOCAyMi41MzQiIGZpbGw9ImJsYWNrIi8+PC9zdmc+', inv: true },
-    meta:     { logo: 'https://commons.wikimedia.org/wiki/Special:FilePath/Meta_Platforms_Inc._logo_(cropped).svg' },
-    qwen:     { logo: 'https://upload.wikimedia.org/wikipedia/commons/6/69/Qwen_logo.svg' },
-    kimi:     { logo: 'https://statics.moonshot.cn/moonshot-ai/assets/static/kimi-icon.ByIGCGon.webp', inv: true },
-    glm:      { logo: 'https://raw.githubusercontent.com/zai-org/GLM-5/refs/heads/main/resources/logo.svg' },
-    mistral:  { logo: 'https://upload.wikimedia.org/wikipedia/commons/e/e6/Mistral_AI_logo_%282025%E2%80%93%29.svg' },
+    meta:     { logo: 'LOGO_URI_META' },
+    qwen:     { logo: 'LOGO_URI_QWEN' },
+    kimi:     { logo: 'LOGO_URI_KIMI', inv: true },
+    glm:      { logo: 'LOGO_URI_GLM' },
+    mistral:  { logo: 'LOGO_URI_MISTRAL' },
     ds:       { logo: DS_LOGO }
   };
   const COMPARE = [
@@ -1817,7 +1840,9 @@ body {
       const lref = m.l ? L[m.l] : null;
       img.className = 'compare-logo' + (lref && lref.inv ? ' logo-invert' : '');
       img.src = lref ? lref.logo : m.logo; img.alt = m.name;
-      img.loading = 'lazy';
+      // Logos are inlined data URIs (already in the HTML), so eager avoids a
+      // decode flash when the compare grid scrolls into view.
+      img.loading = 'eager';
       const name = document.createElement('span');
       name.className = 'compare-name';
       name.textContent = m.name;
@@ -1969,7 +1994,7 @@ body {
 })();
 
 // ===== Service Worker (offline / PWA) =====
-if ('serviceWorker' in navigator) {
+if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
   window.addEventListener('load', function() {
     navigator.serviceWorker.register('sw.js').catch(function(e) {
       // registration may fail on file:// or offline dev; ignore silently
@@ -1992,6 +2017,12 @@ PAGE = PAGE.replace('__WHALE_W__', str(whale_w))
 PAGE = PAGE.replace('__WHALE_H__', str(whale_h))
 PAGE = PAGE.replace('__WHALE_PATH__', whale_path)
 PAGE = PAGE.replace('DATAURI_DEEPSEEK_LOGO', DS_LOGO_DATA)
+for _k, _v in LOGO_URIS.items():
+    _PH = 'LOGO_URI_' + _k.upper()
+    if _v is not None:
+        PAGE = PAGE.replace(_PH, _v)
+    else:
+        print('WARN: assets/logos missing for %s, keeping remote URL placeholder' % _k, file=sys.stderr)
 PAGE = PAGE.replace('__FONTS_CSS__', FONT_CSS)
 
 open(BASE + 'index.html', 'w', encoding='utf-8').write(PAGE)
