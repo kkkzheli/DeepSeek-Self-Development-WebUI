@@ -1,7 +1,6 @@
 // DeepSeek Research — offline service worker
-const CACHE = 'deepseek-rsi-v1';
+const CACHE = 'deepseek-rsi-v2';
 const ASSETS = [
-  './',
   './index.html',
   './manifest.webmanifest',
   './icon.svg',
@@ -27,17 +26,24 @@ self.addEventListener('activate', function(e) {
   );
 });
 
-// Network-first for navigation, cache-first for assets
+// Network-first for navigation (always freshest page), cache-first for assets
 self.addEventListener('fetch', function(e) {
   const url = new URL(e.request.url);
   if (e.request.mode === 'navigate') {
     e.respondWith(
       fetch(e.request).then(function(res) {
-        const copy = res.clone();
-        caches.open(CACHE).then(function(cache) { cache.put('./index.html', copy); });
+        if (res && res.status === 200) {
+          const copy = res.clone();
+          caches.open(CACHE).then(function(cache) {
+            cache.put('./index.html', copy);
+            cache.put('./', copy);
+          });
+        }
         return res;
       }).catch(function() {
-        return caches.match('./index.html');
+        return caches.match('./index.html').then(function(cached) {
+          return cached || caches.match('./');
+        });
       })
     );
     return;

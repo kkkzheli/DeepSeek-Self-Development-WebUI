@@ -366,7 +366,7 @@ body {
 .hero-content {
   position: relative; z-index: 2; flex: 1 0 auto;
   display: flex; flex-direction: column; justify-content: center;
-  padding: 96px var(--page-margin) 48px; max-width: 460px;
+  padding: 96px var(--page-margin) 48px; max-width: min(42vw, 660px);
   pointer-events: none;
 }
 .hero-eyebrow {
@@ -381,7 +381,7 @@ body {
 }
 .hero-subtitle {
   font-size: clamp(16px, 2vw, 20px); font-weight: 400; line-height: 1.55;
-  color: var(--text-secondary); max-width: 500px;
+  color: var(--text-secondary); max-width: 640px;
 }
 .hero-actions {
   display: flex; gap: 14px; margin-top: 32px; pointer-events: auto;
@@ -617,19 +617,20 @@ body {
 
 /* ===== Benchmarks leaderboard ===== */
 .benchmarks { padding: 96px 0 128px; }
-.benchmarks-inner { max-width: 760px; margin: 0 auto; padding: 0 var(--page-margin); }
+.benchmarks-inner { max-width: 90vw; margin: 0 auto; padding: 0 var(--page-margin); }
 .bench-eyebrow {
   font-size: 13px; font-weight: 500; letter-spacing: 0.08em;
   text-transform: uppercase; color: var(--text-tertiary); margin: 0 0 16px;
+  text-align: left;
 }
 .bench-title {
   font-size: clamp(28px, 3.8vw, 40px); font-weight: 600;
   letter-spacing: -0.02em; line-height: 1.15; margin: 0 0 14px;
-  color: var(--text-primary);
+  color: var(--text-primary); text-align: left;
 }
 .bench-sub {
   font-size: 17px; line-height: 1.55; color: var(--text-secondary);
-  margin: 0 0 36px; max-width: 620px;
+  margin: 0 0 36px; max-width: 760px; text-align: left;
 }
 .bench-tabs {
   position: relative; display: inline-flex; gap: 4px; padding: 4px; margin-bottom: 36px;
@@ -661,47 +662,17 @@ body {
   padding: 9px 22px; border: none; border-radius: 999px; cursor: pointer;
   background: transparent; color: var(--text-secondary);
   font-family: var(--font-sans); font-size: 14px; font-weight: 500;
-  --wash: var(--accent); --comet-color: var(--accent);
   transition: color 0.25s ease, text-shadow 0.25s ease,
               transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1),
               box-shadow 0.25s ease;
   will-change: transform;
 }
 .bench-tab .bench-tab-label { position: relative; z-index: 2; }
-/* Cursor follow-wash — same mechanism as .hero-btn::before */
-.bench-tab::before {
-  content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
-  background: radial-gradient(180px circle at var(--mx, 50%) var(--my, 50%),
-              color-mix(in srgb, var(--wash) 32%, transparent),
-              color-mix(in srgb, var(--wash) 12%, transparent) 52%,
-              transparent 72%);
-  opacity: 0; transition: opacity 0.3s ease;
-}
-/* Orbiting comet on the tab ring — same conic-gradient + xor mask as .btn-comet */
-.bench-tab::after {
-  content: ''; position: absolute; inset: 0; border-radius: inherit; padding: 2px;
-  pointer-events: none;
-  background: conic-gradient(from var(--spin, 0deg),
-    color-mix(in srgb, var(--comet-color) 100%, transparent) 0deg,
-    color-mix(in srgb, var(--comet-color) 32%, transparent) 55deg,
-    transparent 120deg,
-    transparent 215deg,
-    color-mix(in srgb, var(--comet-color) 32%, transparent) 265deg,
-    color-mix(in srgb, var(--comet-color) 100%, transparent) 360deg);
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  mask-composite: exclude;
-  opacity: 0; transition: opacity 0.35s ease;
-}
 .bench-tab:hover { color: var(--text-primary); }
 .bench-tab.is-active {
   color: #fff; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.28);
-  --comet-color: #fff; --wash: #fff; /* bright comet reads on the accent pill */
 }
 @media (hover: hover) and (pointer: fine) {
-  .bench-tab:hover::before { opacity: 1; }
-  .bench-tab:hover::after { opacity: 1; }
   .bench-tab:hover {
     transform: translateY(-1px); /* lift reads as a physical key */
     box-shadow: 0 3px 10px -3px color-mix(in srgb, var(--accent) 30%, transparent);
@@ -710,7 +681,6 @@ body {
 .bench-tab:active { transform: scale(0.96); }
 .bench-tab:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) {
-  .bench-tab::after { display: none; }
   .bench-thumb { transition: none; }
 }
 .bench-group-label {
@@ -726,9 +696,9 @@ body {
   margin-left: auto; font-size: 15px; font-weight: 500;
   color: var(--text-primary); font-variant-numeric: tabular-nums;
 }
-.bench-track { height: 6px; border-radius: 3px; background: var(--bg-surface); overflow: hidden; }
+.bench-track { height: 7px; border-radius: 4px; background: var(--bg-surface); overflow: hidden; }
 .bench-bar {
-  height: 100%; width: 0; border-radius: 3px;
+  height: 100%; width: 0; border-radius: 4px;
   background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 50%, transparent), var(--accent));
   transition: width 0.9s cubic-bezier(0.23, 1, 0.32, 1);
 }
@@ -742,8 +712,8 @@ body {
 }
 
 /* ===== Model comparison — latest flagships vs DeepSeek V4 Pro ===== */
-.compare { padding: 96px 24px; position: relative; }
-.compare-inner { max-width: 920px; margin: 0 auto; }
+.compare { padding: 96px 0; position: relative; }
+.compare-inner { max-width: 90vw; margin: 0 auto; padding: 0 var(--page-margin); }
 .compare-grid {
   display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 4px;
 }
@@ -773,10 +743,12 @@ body {
               inset 0 0 24px color-mix(in srgb, var(--accent) 14%, transparent);
 }
 .compare-logo {
-  width: 28px; height: 28px; flex: 0 0 28px; border-radius: 9px;
-  object-fit: contain; padding: 3px; background: #fff;
-  border: 1px solid var(--border-subtle);
+  width: 28px; height: 28px; flex: 0 0 28px; border-radius: 7px;
+  object-fit: contain;
 }
+/* Single-colour brand marks (OpenAI bloom, Grok) are black-on-transparent;
+   invert them so they stay visible on the dark glass cards. */
+[data-theme="dark"] .compare-logo.logo-invert { filter: invert(1); }
 .compare-name {
   font-size: 14px; font-weight: 500; color: var(--text-primary);
   white-space: nowrap; flex: 0 0 auto; max-width: 150px; overflow: hidden;
@@ -809,11 +781,11 @@ body {
 
 /* ===== Article ===== */
 .article { padding: 96px 0; }
-.article-inner { max-width: 760px; margin: 0 auto; padding: 0 var(--page-margin); }
+.article-inner { max-width: 90vw; margin: 0 auto; padding: 0 var(--page-margin); }
 .article h2 {
   font-size: clamp(24px, 3.2vw, 32px); font-weight: 600;
   letter-spacing: -0.02em; margin: 64px 0 20px;
-  color: var(--text-primary);
+  color: var(--text-primary); text-align: left;
 }
 .article h2:first-child { margin-top: 0; }
 .article h3 {
@@ -1364,7 +1336,7 @@ body {
   const cv = document.getElementById('fx-canvas');
   const ctx = cv.getContext('2d');
   let w = window.innerWidth, h = window.innerHeight;
-  const MAX_PARTICLES = 180;
+  const MAX_PARTICLES = 340;
   let particles = [];
   let mx = -999, my = -999, tmx = -999, tmy = -999;
   let lastMx = -999, lastMy = -999, lastEmitX = -999, lastEmitY = -999;
@@ -1496,10 +1468,13 @@ body {
   }
 
   function seed() {
-    for (let i = 0; i < 40; i++) {
+    // Ambient background cloud: scattered across the whole viewport with a
+    // slow random drift so the field reads as a sparse, living backdrop.
+    const n = Math.round((w * h) / 22000); // ~130 on a 1536×647 window
+    for (let i = 0; i < n; i++) {
       spawn(Math.random() * w, Math.random() * h,
-        (Math.random() - 0.5) * 0.25, (Math.random() - 0.5) * 0.25,
-        { maxLife: 5 + Math.random() * 4, size: 1 + Math.random() * 1.2, type: 'attract', drag: 0.97 });
+        (Math.random() - 0.5) * 0.5, (Math.random() - 0.5) * 0.5,
+        { maxLife: 5 + Math.random() * 4, size: 0.9 + Math.random() * 1.4, type: 'attract', drag: 0.97 });
     }
   }
 
@@ -1543,13 +1518,13 @@ body {
   requestAnimationFrame(loop);
 })();
 
-// ===== Buttons & bench tabs — soft follow-light + orbiting edge comet =====
+// ===== Buttons — soft follow-light + orbiting edge comet =====
 // One light trails the cursor smoothly (lerped in a rAF loop); --mx/--my drive
 // the inner wash (::before) while hovering. While the pointer stays over the
 // element, --spin advances continuously in the same loop, so the comet that
 // orbits the edge ring never restarts or jumps when hover begins.
 (function() {
-  const btns = document.querySelectorAll('.hero-btn, .bench-tab');
+  const btns = document.querySelectorAll('.hero-btn');
   btns.forEach(function(btn) {
     const target = { x: -999, y: -999 };
     const cur = { x: -999, y: -999 };
@@ -1715,60 +1690,88 @@ body {
 })();
 
 // ===== Model comparison — latest flagships vs DeepSeek V4 Pro =====
-// COMPARE: one entry per benchmark; each lists models with {name, logo, v,
-// max?, fmt?, color}. Rows marked ds get the accent halo + badge.
-// Scores were verified online (2026-08-15) from each lab's official launch
-// posts / model cards; Grok rows are N/A because xAI didn't publish those
-// benchmarks. GPT-5.6's SWE-bench figure is vendor-reported and unofficial.
+// COMPARE: one entry per benchmark; each lists 10 flagship models with
+// {name, logo, v, color, note?, inv?}. Rows marked ds get the accent halo +
+// badge; inv marks single-colour logos that need inverting on dark theme.
+// Scores verified online (2026-08-15): official model cards where published,
+// otherwise vals.ai / tbench.ai / Artificial Analysis third-party runs.
 (function() {
   const DS_LOGO = 'DATAURI_DEEPSEEK_LOGO';
+  const L = {
+    openai:   { logo: 'https://upload.wikimedia.org/wikipedia/commons/6/66/OpenAI_logo_2025_%28symbol%29.svg', inv: true },
+    anthropic:{ logo: 'https://upload.wikimedia.org/wikipedia/commons/b/b0/Claude_AI_symbol.svg' },
+    google:   { logo: 'https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg' },
+    grok:     { logo: 'https://commons.wikimedia.org/wiki/Special:FilePath/Grok-feb-2025-logo.svg', inv: true },
+    meta:     { logo: 'https://upload.wikimedia.org/wikipedia/commons/7/7b/Meta_Platforms_Inc._logo.svg' },
+    qwen:     { logo: 'https://upload.wikimedia.org/wikipedia/commons/6/69/Qwen_logo.svg' },
+    kimi:     { logo: 'https://raw.githubusercontent.com/MoonshotAI/Kimi-K2/main/figures/kimi-logo.png' },
+    glm:      { logo: 'https://raw.githubusercontent.com/zai-org/GLM-5/refs/heads/main/resources/logo.svg' },
+    mistral:  { logo: 'https://upload.wikimedia.org/wikipedia/commons/e/e6/Mistral_AI_logo_%282025%E2%80%93%29.svg' },
+    ds:       { logo: DS_LOGO }
+  };
   const COMPARE = [
     {
       name: 'SWE-bench Verified',
-      hint: 'GPT-5.6 figure vendor-reported, unofficial',
+      hint: 'official cards where published, otherwise third-party runs',
       models: [
-        { name: 'GPT-5.6 Sol',    logo: 'https://upload.wikimedia.org/wikipedia/commons/a/af/OpenAI_logo_2025_%28wordmark%29.svg', v: 96.0, color: '#10A37F', note: '~96% reported by orcarouter.ai (July 2026), not independently audited; OpenAI publishes SWE-bench Pro instead' },
-        { name: 'Claude Fable 5', logo: 'https://upload.wikimedia.org/wikipedia/commons/7/78/Anthropic_logo.svg', v: 95.0, color: '#D97757', note: 'Official Claude Fable 5 system card, June 2026' },
-        { name: 'DeepSeek V4 Pro', logo: DS_LOGO, v: 80.6, color: 'var(--accent)', ds: true, note: 'Official DeepSeek-V4-Pro-0813 model card' },
-        { name: 'Gemini 3.1 Pro', logo: 'https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg', v: 80.6, color: '#F4B400', note: 'Official Google launch table, thinking mode on' },
-        { name: 'Grok 4.6',       logo: 'https://commons.wikimedia.org/wiki/Special:FilePath/Grok-feb-2025-logo.svg', v: null, color: '#B8C4DE', note: 'xAI does not publish SWE-bench Verified for Grok 4.6' },
-        { name: 'Llama 4 Maverick', logo: 'https://upload.wikimedia.org/wikipedia/commons/7/7b/Meta_Platforms_Inc._logo.svg', v: null, color: '#0668E1', note: 'Meta does not report SWE-bench Verified for Llama 4' }
+        { name: 'GPT-5.6 Sol',        l: 'openai',    v: 96.2, color: '#10A37F', note: 'vals.ai SWE-bench run (Aug 2026); OpenAI publishes SWE-bench Pro, not Verified' },
+        { name: 'Grok 4.6',           l: 'grok',      v: 95.6, color: '#B8C4DE', note: 'vals.ai independent run (Aug 2026, ±0.92); not published by xAI' },
+        { name: 'Claude Fable 5',     l: 'anthropic', v: 95.0, color: '#D97757', note: 'Official Claude Fable 5 system card, max reasoning, 5-run average' },
+        { name: 'Kimi K3',            l: 'kimi',      v: 93.4, color: '#6C8CFF', note: 'vals.ai independent run (Aug 2026); official card reports DeepSWE instead' },
+        { name: 'Qwen3.8-Max',        l: 'qwen',      v: 85.6, color: '#00B4D8', note: 'vals.ai run (Aug 2026, Mini-SWE-agent); official card reports SWE-bench Pro 67.7' },
+        { name: 'GLM-5.2',            l: 'glm',       v: 82.8, color: '#8B5CF6', note: 'vals.ai run (Jun 2026); official card reports SWE-bench Pro 62.1' },
+        { name: 'DeepSeek V4 Pro',    l: 'ds',        v: 80.6, color: 'var(--accent)', ds: true, note: 'Official DeepSeek-V4-Pro-0813 model card' },
+        { name: 'Gemini 3.1 Pro',     l: 'google',    v: 80.6, color: '#F4B400', note: 'Official Google launch table, thinking mode on' },
+        { name: 'Mistral Large 3',    l: 'mistral',   v: 41.4, color: '#FF8A00', note: 'vals.ai run (Aug 2026, ±2.21); not published by Mistral' },
+        { name: 'Llama 4 Maverick',   l: 'meta',      v: 36.8, color: '#0668E1', note: 'OpenHands community eval (Apr 2025); Meta never published SWE-bench Verified' }
       ]
     },
     {
       name: 'GPQA Diamond',
-      hint: 'Fable 5 figure third-party (vals.ai)',
+      hint: 'official cards where published, otherwise third-party runs',
       models: [
-        { name: 'GPT-5.6 Sol',    logo: 'https://upload.wikimedia.org/wikipedia/commons/a/af/OpenAI_logo_2025_%28wordmark%29.svg', v: 94.6, color: '#10A37F', note: 'Official GPT-5.6 card, July 2026 GA' },
-        { name: 'Gemini 3.1 Pro', logo: 'https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg', v: 94.3, color: '#F4B400', note: 'Official Google launch table, thinking mode on' },
-        { name: 'Claude Fable 5', logo: 'https://upload.wikimedia.org/wikipedia/commons/7/78/Anthropic_logo.svg', v: 93.2, color: '#D97757', note: 'vals.ai run (Aug 2026); falls to ~55.6% if refusals count as failures' },
-        { name: 'DeepSeek V4 Pro', logo: DS_LOGO, v: 90.1, color: 'var(--accent)', ds: true, note: 'Official DeepSeek-V4-Pro-0813 model card' },
-        { name: 'Grok 4.6',       logo: 'https://commons.wikimedia.org/wiki/Special:FilePath/Grok-feb-2025-logo.svg', v: null, color: '#B8C4DE', note: 'Not published by xAI for Grok 4.6' },
-        { name: 'Llama 4 Maverick', logo: 'https://upload.wikimedia.org/wikipedia/commons/7/7b/Meta_Platforms_Inc._logo.svg', v: 69.8, color: '#0668E1', note: 'Official Meta card, 0-shot, t=0' }
+        { name: 'GPT-5.6 Sol',        l: 'openai',    v: 95.2, color: '#10A37F', note: 'vals.ai run (Aug 2026); not published by OpenAI' },
+        { name: 'Grok 4.6',           l: 'grok',      v: 94.7, color: '#B8C4DE', note: 'vals.ai independent run (Aug 2026, ±1.13); xAI post claimed 94.9%' },
+        { name: 'Gemini 3.1 Pro',     l: 'google',    v: 94.3, color: '#F4B400', note: 'Official Google launch table, thinking mode on' },
+        { name: 'Kimi K3',            l: 'kimi',      v: 93.5, color: '#6C8CFF', note: 'Official Kimi K3 technical report, max reasoning effort' },
+        { name: 'Claude Fable 5',     l: 'anthropic', v: 93.2, color: '#D97757', note: 'vals.ai run (Aug 2026); falls to ~55.6% if refusals count as failures' },
+        { name: 'Qwen3.8-Max',        l: 'qwen',      v: 92.6, color: '#00B4D8', note: 'Official Qwen model card (max reasoning); AA run 92.7 corroborates' },
+        { name: 'GLM-5.2',            l: 'glm',       v: 91.2, color: '#8B5CF6', note: 'Official GLM-5.2 model card, max reasoning effort' },
+        { name: 'DeepSeek V4 Pro',    l: 'ds',        v: 90.1, color: 'var(--accent)', ds: true, note: 'Official DeepSeek-V4-Pro-0813 model card' },
+        { name: 'Llama 4 Maverick',   l: 'meta',      v: 69.8, color: '#0668E1', note: 'Official Meta card, 0-shot, t=0' },
+        { name: 'Mistral Large 3',    l: 'mistral',   v: 67.2, color: '#FF8A00', note: 'Official card, 5-shot no-CoT; vals.ai run 68.43' }
       ]
     },
     {
       name: 'MMLU-Pro',
-      hint: 'third-party mirror leaderboard',
+      hint: 'no lab publishes this on their card; all figures third-party',
       models: [
-        { name: 'Claude Fable 5', logo: 'https://upload.wikimedia.org/wikipedia/commons/7/78/Anthropic_logo.svg', v: 91.5, color: '#D97757', note: 'Vals MMLU-Pro mirror leaderboard, Aug 2026' },
-        { name: 'Gemini 3.1 Pro', logo: 'https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg', v: 91.4, color: '#F4B400', note: 'Official Google model card (gemini-3.1-pro-preview-0214)' },
-        { name: 'GPT-5.6 Sol',    logo: 'https://upload.wikimedia.org/wikipedia/commons/a/af/OpenAI_logo_2025_%28wordmark%29.svg', v: 89.1, color: '#10A37F', note: 'Vals MMLU-Pro mirror leaderboard, Aug 2026' },
-        { name: 'DeepSeek V4 Pro', logo: DS_LOGO, v: 87.5, color: 'var(--accent)', ds: true, note: 'Official DeepSeek-V4-Pro-0813 model card' },
-        { name: 'Grok 4.6',       logo: 'https://commons.wikimedia.org/wiki/Special:FilePath/Grok-feb-2025-logo.svg', v: null, color: '#B8C4DE', note: 'Not published by xAI for Grok 4.6' },
-        { name: 'Llama 4 Maverick', logo: 'https://upload.wikimedia.org/wikipedia/commons/7/7b/Meta_Platforms_Inc._logo.svg', v: 80.5, color: '#0668E1', note: 'Official Meta card, 0-shot, t=0' }
+        { name: 'Claude Fable 5',     l: 'anthropic', v: 91.5, color: '#D97757', note: 'vals.ai MMLU-Pro leaderboard, Aug 2026' },
+        { name: 'Gemini 3.1 Pro',     l: 'google',    v: 91.0, color: '#F4B400', note: 'hokai.io run (official card has MMMU-Pro 80.5, different test)' },
+        { name: 'Grok 4.6',           l: 'grok',      v: 89.4, color: '#B8C4DE', note: 'vals.ai independent run (Aug 2026, ±0.30)' },
+        { name: 'GPT-5.6 Sol',        l: 'openai',    v: 89.1, color: '#10A37F', note: 'vals.ai run (Aug 2026); not published by OpenAI' },
+        { name: 'Qwen3.8-Max',        l: 'qwen',      v: 88.6, color: '#00B4D8', note: 'vals.ai run (Aug 2026, 5-shot CoT)' },
+        { name: 'Kimi K3',            l: 'kimi',      v: 88.0, color: '#6C8CFF', note: 'vals.ai run (Aug 2026, max reasoning)' },
+        { name: 'DeepSeek V4 Pro',    l: 'ds',        v: 87.5, color: 'var(--accent)', ds: true, note: 'Official DeepSeek-V4-Pro-0813 model card' },
+        { name: 'GLM-5.2',            l: 'glm',       v: 86.7, color: '#8B5CF6', note: 'vals.ai run (Jun 2026, ±0.33)' },
+        { name: 'Llama 4 Maverick',   l: 'meta',      v: 80.5, color: '#0668E1', note: 'Official Meta card, 0-shot, t=0' },
+        { name: 'Mistral Large 3',    l: 'mistral',   v: 79.8, color: '#FF8A00', note: 'vals.ai run (Dec 2025, ±0.47)' }
       ]
     },
     {
       name: 'Terminal-Bench',
-      hint: 'mixed versions: 2.0–3.0, not directly comparable',
+      hint: 'versions vary (1.0–3.0) — not directly comparable',
       models: [
-        { name: 'GPT-5.6 Sol',    logo: 'https://upload.wikimedia.org/wikipedia/commons/a/af/OpenAI_logo_2025_%28wordmark%29.svg', v: 88.8, color: '#10A37F', note: 'Terminal-Bench 2.1, official card, max reasoning, single agent' },
-        { name: 'DeepSeek V4 Pro', logo: DS_LOGO, v: 87.9, color: 'var(--accent)', ds: true, note: 'Terminal-Bench 2.1, official model card' },
-        { name: 'Claude Fable 5', logo: 'https://upload.wikimedia.org/wikipedia/commons/7/78/Anthropic_logo.svg', v: 84.3, color: '#D97757', note: 'Terminal-Bench 2.1, official system card (safety fallback drags it down)' },
-        { name: 'Gemini 3.1 Pro', logo: 'https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg', v: 68.5, color: '#F4B400', note: 'Terminal-Bench 2.0, official Google launch table' },
-        { name: 'Grok 4.6',       logo: 'https://commons.wikimedia.org/wiki/Special:FilePath/Grok-feb-2025-logo.svg', v: 26.0, color: '#B8C4DE', note: 'Terminal-Bench v3.0, official xAI launch table — a newer, harder version' },
-        { name: 'Llama 4 Maverick', logo: 'https://upload.wikimedia.org/wikipedia/commons/7/7b/Meta_Platforms_Inc._logo.svg', v: null, color: '#0668E1', note: 'Meta does not report Terminal-Bench for Llama 4' }
+        { name: 'GPT-5.6 Sol',        l: 'openai',    v: 88.8, color: '#10A37F', note: 'Terminal-Bench 2.1, official card, max reasoning, single agent' },
+        { name: 'Kimi K3',            l: 'kimi',      v: 88.3, color: '#6C8CFF', note: 'Terminal-Bench 2.1, official technical report, Kimi Code harness' },
+        { name: 'DeepSeek V4 Pro',    l: 'ds',        v: 87.9, color: 'var(--accent)', ds: true, note: 'Terminal-Bench 2.1, official model card' },
+        { name: 'Qwen3.8-Max',        l: 'qwen',      v: 86.6, color: '#00B4D8', note: 'Terminal-Bench 2.1, official card, Claude Code harness; vals.ai run 67.4' },
+        { name: 'Claude Fable 5',     l: 'anthropic', v: 84.3, color: '#D97757', note: 'Terminal-Bench 2.1, official system card (safety fallback drags it down)' },
+        { name: 'GLM-5.2',            l: 'glm',       v: 81.0, color: '#8B5CF6', note: 'Terminal-Bench 2.1, official card, Terminus-2 harness' },
+        { name: 'Gemini 3.1 Pro',     l: 'google',    v: 70.7, color: '#F4B400', note: 'Terminal-Bench 2.1, tbench.ai leaderboard, best harness' },
+        { name: 'Grok 4.6',           l: 'grok',      v: 26.0, color: '#B8C4DE', note: 'Terminal-Bench v3.0, official xAI launch table — a newer, harder version' },
+        { name: 'Llama 4 Maverick',   l: 'meta',      v: 15.5, color: '#0668E1', note: 'Terminal-Bench 1.0, tbench.ai leaderboard (May 2025) — older, easier version' },
+        { name: 'Mistral Large 3',    l: 'mistral',   v: 9.0,  color: '#FF8A00', note: 'Terminal-Bench 2.0, vals.ai leaderboard (Jun 2026)' }
       ]
     }
   ];
@@ -1786,11 +1789,17 @@ body {
       h.appendChild(hint);
     }
     card.appendChild(h);
-    b.models.forEach(function(m) {
+    b.models.slice().sort(function(a, b) {
+      const av = (a.v == null) ? -1 : a.v;
+      const bv = (b.v == null) ? -1 : b.v;
+      return bv - av; // highest first; unpublished (—) sink to the bottom
+    }).forEach(function(m) {
       const row = document.createElement('div');
       row.className = 'compare-row' + (m.ds ? ' is-ds' : '');
       const img = document.createElement('img');
-      img.className = 'compare-logo'; img.src = m.logo; img.alt = m.name;
+      const lref = m.l ? L[m.l] : null;
+      img.className = 'compare-logo' + (lref && lref.inv ? ' logo-invert' : '');
+      img.src = lref ? lref.logo : m.logo; img.alt = m.name;
       img.loading = 'lazy';
       const name = document.createElement('span');
       name.className = 'compare-name';
