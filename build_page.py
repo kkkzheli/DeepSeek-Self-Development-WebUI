@@ -310,18 +310,18 @@ body {
 .site-header {
   position: fixed; top: 0; left: 0; right: 0; z-index: 100;
   padding: 14px var(--page-margin);
-  background: color-mix(in srgb, var(--bg-page) 55%, transparent);
-  backdrop-filter: saturate(220%) blur(28px);
-  -webkit-backdrop-filter: saturate(220%) blur(28px);
+  background: color-mix(in srgb, var(--bg-page) 38%, transparent);
+  backdrop-filter: saturate(300%) blur(40px);
+  -webkit-backdrop-filter: saturate(300%) blur(40px);
   border-bottom: 1px solid transparent;
-  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--text-primary) 7%, transparent);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--text-primary) 8%, transparent);
   transition: border-color 0.3s ease, background 0.3s ease, box-shadow 0.3s ease;
 }
 .site-header.scrolled {
   border-bottom-color: var(--border-subtle);
-  background: color-mix(in srgb, var(--bg-page) 76%, transparent);
-  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--text-primary) 6%, transparent),
-              0 8px 32px -12px color-mix(in srgb, var(--bg-page) 60%, transparent);
+  background: color-mix(in srgb, var(--bg-page) 68%, transparent);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--text-primary) 7%, transparent),
+              0 8px 40px -12px color-mix(in srgb, var(--bg-page) 55%, transparent);
 }
 .header-inner { max-width: 1400px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; }
 .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text-primary); }
@@ -705,6 +705,10 @@ body {
 .bench-footnote {
   margin-top: 32px; font-size: 13px; line-height: 1.6; color: var(--text-tertiary);
 }
+.bench-asof {
+  margin-top: 18px; font-size: 13px; line-height: 1.6; color: var(--text-tertiary);
+}
+.bench-asof strong { font-weight: 600; color: var(--text-secondary); }
 .bench-footnote a { color: var(--accent); text-decoration: none; }
 .bench-footnote a:hover { text-decoration: underline; }
 @media (prefers-reduced-motion: reduce) {
@@ -933,7 +937,7 @@ body {
   <div class="hero-overlay"></div>
   <div class="hero-content">
     <p class="hero-eyebrow">__LOGO_SMALL__ DeepSeek Research Institute</p>
-    <h1 class="hero-title">When AI builds itself</h1>
+    <h1 class="hero-title">When AI<br>builds itself</h1>
     <p class="hero-subtitle">Our progress toward recursive self-improvement — where AI systems learn to design, train, and refine the next generation of intelligence. Watch the DeepSeek whale assemble itself, cell by cell, the way the loop compounds.</p>
     <div class="hero-actions">
       <a class="hero-btn hero-btn--primary" href="https://chat.deepseek.com" target="_blank" rel="noopener noreferrer"><span class="btn-comet" aria-hidden="true"></span><span class="btn-dot"></span><span class="btn-label">Try DeepSeek Chat</span></a>
@@ -997,6 +1001,7 @@ body {
       <button class="bench-tab" data-model="flash" role="tab" aria-selected="false"><span class="bench-tab-label">DeepSeek V4 Flash</span></button>
     </div>
     <div class="bench-list" aria-live="polite"></div>
+    <p class="bench-asof">Data as of <strong>August 13, 2026</strong> — DeepSeek-V4-Pro-0813 and DeepSeek-V4-Flash-0731 model cards.</p>
     <p class="bench-footnote">Sources: the <a href="https://huggingface.co/deepseek-ai/DeepSeek-V4-Pro-0813" target="_blank" rel="noopener noreferrer">DeepSeek-V4-Pro model card</a>, the <a href="https://huggingface.co/deepseek-ai/DeepSeek-V4-Flash-0731" target="_blank" rel="noopener noreferrer">DeepSeek-V4-Flash model card</a>, and the <a href="https://arxiv.org/abs/2606.19348" target="_blank" rel="noopener noreferrer">V4 technical report</a>. This page is an unofficial replica — scores are shown for entertainment and education only.</p>
   </div>
 </section>
@@ -1008,6 +1013,7 @@ body {
     <h2 class="bench-title">How V4 stacks up</h2>
     <p class="bench-sub">Latest flagship scores from each lab's own publications, next to DeepSeek V4 Pro. Bars are color-coded per lab and the DeepSeek row is highlighted. Eval conditions differ between labs, so read this as a rough sketch, not a ranking.</p>
     <div class="compare-grid" id="compare-grid"></div>
+    <p class="bench-asof">Data collected <strong>August 15, 2026</strong> from official model cards and third-party leaderboards (vals.ai, tbench.ai). Terminal-Bench figures span versions 1.0–3.0.</p>
     <p class="bench-footnote">Sources: each lab's official model card or launch post; the DeepSeek row quotes the DeepSeek-V4-Pro model card. This page is an unofficial replica — scores are shown for entertainment and education only.</p>
   </div>
 </section>
@@ -1139,12 +1145,12 @@ body {
     cols = Math.max(10, Math.floor(w / PITCH));
     rows = Math.max(8, Math.floor(h / PITCH));
 
-    // Whale sized to ~58% of viewport height (desktop: right third, clear of
+    // Whale sized to ~68% of viewport height (desktop: right third, clear of
     // the title text) or to the mobile width (below the text, centered).
     // The breakpoint is 1024px, not 768px: between 768-1024px the desktop
     // placement collided with the text, so anything below 1024px puts the
     // whale under the text block instead. Never overflows the canvas.
-    const targetH = Math.floor(h * 0.58 / PITCH);
+    const targetH = Math.floor(h * 0.68 / PITCH);
     let scale = Math.max(6, Math.min(WY, targetH)) / WY;
     let ox, oy;
     let wW, wH;
@@ -1336,10 +1342,10 @@ body {
   const cv = document.getElementById('fx-canvas');
   const ctx = cv.getContext('2d');
   let w = window.innerWidth, h = window.innerHeight;
-  const MAX_PARTICLES = 340;
+  const MAX_PARTICLES = 900;
   let particles = [];
   let mx = -999, my = -999, tmx = -999, tmy = -999;
-  let lastMx = -999, lastMy = -999, lastEmitX = -999, lastEmitY = -999;
+  let lastMx = -999, lastMy = -999;
   let isDragging = false;
   let C_ACCENT = '#4d6bfe', C_GLOW = '#9db5ff', C_CORE = '#ffffff';
 
@@ -1373,6 +1379,8 @@ body {
     p.size = opts.size || (1.6 + Math.random() * 1.8);
     p.type = opts.type || 'attract';
     p.drag = opts.drag || 0.92;
+    p.tw = 1 + Math.random() * 3;        // twinkle speed (rad/s)
+    p.ph = Math.random() * Math.PI * 2;  // twinkle phase
   }
 
   function burst(x, y) {
@@ -1387,7 +1395,10 @@ body {
   }
 
   function update() {
-    const attractR = 150;
+    // Wide, soft gather field: ambient particles drift toward the cursor and
+    // cluster into a loose cloud (force dies inside ~46px so they never pile
+    // into a single dot). Dragging pulls harder.
+    const attractR = 260;
     mx += (tmx - mx) * 0.12; my += (tmy - my) * 0.12;
 
     for (let i = 0; i < particles.length; i++) {
@@ -1408,48 +1419,30 @@ body {
         const dx = mx - p.x, dy = my - p.y;
         const dist = Math.hypot(dx, dy);
         if (dist < attractR && dist > 0.5) {
-          const f = (1 - dist / attractR) * 0.5;
-          p.vx += (dx / dist) * f; p.vy += (dy / dist) * f;
+          const f = (1 - dist / attractR) * (isDragging ? 1.5 : 0.85);
+          p.vx += (dx / dist) * f * Math.min(1, dist / 46);
+          p.vy += (dy / dist) * f * Math.min(1, dist / 46);
         }
         p.vx *= p.drag; p.vy *= p.drag;
       } else if (p.type === 'burst') {
         p.vx *= p.drag; p.vy *= p.drag;
         p.vy += 0.05; // slight settle
-      } else { // trail
-        p.vx *= 0.94; p.vy *= 0.94;
       }
       p.x += p.vx; p.y += p.vy;
     }
 
-    if (mx < -900) return;  // cursor off the window
-
-    if (isDragging) {
-      // drag: dense, longer-lived trail
-      const vx = mx - lastMx, vy = my - lastMy;
-      spawn(mx + (Math.random() - 0.5) * 8, my + (Math.random() - 0.5) * 8,
-        vx * 0.35 + (Math.random() - 0.5) * 0.7, vy * 0.35 + (Math.random() - 0.5) * 0.7,
-        { maxLife: 0.7 + Math.random() * 0.5, size: 2.2 + Math.random() * 2.2, type: 'trail', drag: 0.94 });
-    } else {
-      // hover trail: emit two bright particles every 8px of travel
-      const vx = mx - lastMx, vy = my - lastMy;
-      if (Math.hypot(mx - lastEmitX, my - lastEmitY) > 8) {
-        lastEmitX = mx; lastEmitY = my;
-        for (let k = 0; k < 2; k++) {
-          spawn(mx + (Math.random() - 0.5) * 6, my + (Math.random() - 0.5) * 6,
-            vx * 0.14 + (Math.random() - 0.5) * 0.6, vy * 0.14 + (Math.random() - 0.5) * 0.6,
-            { maxLife: 0.4 + Math.random() * 0.4, size: 1.8 + Math.random() * 1.6, type: 'trail', drag: 0.92 });
-        }
-      }
-    }
     lastMx = mx; lastMy = my;
   }
 
   function draw() {
     ctx.clearRect(0, 0, w, h);
+    const now = performance.now() / 1000;
     for (let i = 0; i < particles.length; i++) {
       const p = particles[i];
       if (p.life <= 0) continue;
-      const a = Math.max(0, p.life / p.maxLife);
+      // twinkle: brightness breathes per-particle, like distant stars
+      const tw = 0.5 + 0.5 * Math.sin(now * p.tw + p.ph);
+      const a = Math.max(0, p.life / p.maxLife) * tw;
       const t = p.size * (0.55 + 0.3 * a);
       // soft outer glow
       ctx.globalAlpha = a * 0.3;
@@ -1468,13 +1461,14 @@ body {
   }
 
   function seed() {
-    // Ambient background cloud: scattered across the whole viewport with a
-    // slow random drift so the field reads as a sparse, living backdrop.
-    const n = Math.round((w * h) / 22000); // ~130 on a 1536×647 window
+    // Night-sky density: ~5x the earlier sparse field, with a slow drift and
+    // per-particle twinkle (see draw). Density scales with area: ~220 stars
+    // on a 1536×647 window.
+    const n = Math.round((w * h) / 4500);
     for (let i = 0; i < n; i++) {
       spawn(Math.random() * w, Math.random() * h,
-        (Math.random() - 0.5) * 0.5, (Math.random() - 0.5) * 0.5,
-        { maxLife: 5 + Math.random() * 4, size: 0.9 + Math.random() * 1.4, type: 'attract', drag: 0.97 });
+        (Math.random() - 0.5) * 0.22, (Math.random() - 0.5) * 0.22,
+        { maxLife: 6 + Math.random() * 5, size: 0.6 + Math.random() * 1.5, type: 'attract', drag: 0.97 });
     }
   }
 
@@ -1701,10 +1695,10 @@ body {
     openai:   { logo: 'https://upload.wikimedia.org/wikipedia/commons/6/66/OpenAI_logo_2025_%28symbol%29.svg', inv: true },
     anthropic:{ logo: 'https://upload.wikimedia.org/wikipedia/commons/b/b0/Claude_AI_symbol.svg' },
     google:   { logo: 'https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg' },
-    grok:     { logo: 'https://commons.wikimedia.org/wiki/Special:FilePath/Grok-feb-2025-logo.svg', inv: true },
-    meta:     { logo: 'https://upload.wikimedia.org/wikipedia/commons/7/7b/Meta_Platforms_Inc._logo.svg' },
+    grok:     { logo: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzNCAzMiI+PHBhdGggZD0iTTEzLjM3NCAyMC41NDA3TDI0LjQ1NTUgMTIuMzUwNkMyNC45OTg4IDExLjk0OTEgMjUuNzc1MyAxMi4xMDU3IDI2LjAzNDIgMTIuNzI5NEMyNy4zOTY2IDE2LjAxODUgMjYuNzg3OSAxOS45NzEyIDI0LjA3NzIgMjIuNjg1MUMyMS4zNjY2IDI1LjM5ODkgMTcuNTk1IDI1Ljk5NDEgMTQuMTQ3NyAyNC42Mzg2TDEwLjM4MTggMjYuMzg0M0MxNS43ODMyIDMwLjA4MDYgMjIuMzQyMiAyOS4xNjY1IDI2LjQ0MDkgMjUuMDYwMUMyOS42OTIgMjEuODA1MSAzMC42OTg5IDE3LjM2ODMgMjkuNzU3NCAxMy4zNjczTDI5Ljc2NTkgMTMuMzc1OEMyOC40MDA2IDcuNDk4MDkgMzAuMTAxNiA1LjE0ODcxIDMzLjU4NTkgMC4zNDQ1NzZDMzMuNjY4MyAwLjIzMDY2NyAzMy43NTA4IDAuMTE2NzU3IDMzLjgzMzMgMEwyOS4yNDgyIDQuNTkwNTVWNC41NzYzMUwxMy4zNzEyIDIwLjU0MzYiIGZpbGw9ImJsYWNrIi8+PHBhdGggZD0iTTExLjA4NjcgMjIuNTMxMkM3LjIwOTc5IDE4LjgyMzQgNy44NzgyMSAxMy4wODUyIDExLjE4NjIgOS43NzYxOEMxMy42MzIzIDcuMzI3MSAxNy42NCA2LjMyNzU1IDIxLjEzODUgNy43OTY5OEwyNC44OTU5IDYuMDU5ODZDMjQuMjE5IDUuNTcwMDUgMjMuMzUxNCA1LjA0MzIyIDIyLjM1NTkgNC42NzMwMUMxNy44NTYyIDIuODE5MTQgMTIuNDY5IDMuNzQxOCA4LjgxMTE1IDcuNDAxMTRDNS4yOTI3MSAxMC45MjM4IDQuMTg2MjYgMTYuMzQwMiA2LjA4NjI4IDIwLjk2MjFDNy41MDU2IDI0LjQxNjQgNS4xNzg5MyAyNi44NTk3IDIuODM1MiAyOS4zMjU5QzIuMDA0NjUgMzAuMjAwMSAxLjE3MTI2IDMxLjA3NDQgMC41IDMxLjk5OTlMMTEuMDgzOCAyMi41MzQiIGZpbGw9ImJsYWNrIi8+PC9zdmc+', inv: true },
+    meta:     { logo: 'https://commons.wikimedia.org/wiki/Special:FilePath/Meta_Platforms_Inc._logo_(cropped).svg' },
     qwen:     { logo: 'https://upload.wikimedia.org/wikipedia/commons/6/69/Qwen_logo.svg' },
-    kimi:     { logo: 'https://raw.githubusercontent.com/MoonshotAI/Kimi-K2/main/figures/kimi-logo.png' },
+    kimi:     { logo: 'https://statics.moonshot.cn/moonshot-ai/assets/static/kimi-icon.ByIGCGon.webp', inv: true },
     glm:      { logo: 'https://raw.githubusercontent.com/zai-org/GLM-5/refs/heads/main/resources/logo.svg' },
     mistral:  { logo: 'https://upload.wikimedia.org/wikipedia/commons/e/e6/Mistral_AI_logo_%282025%E2%80%93%29.svg' },
     ds:       { logo: DS_LOGO }
