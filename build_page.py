@@ -9,8 +9,8 @@ syms = json.load(open(BASE + 'symbols-ds.json'))
 whale_path = json.load(open(BASE + 'whale-path.json'))['path']
 
 # ---- Anthropic's own English fonts, embedded so the page stays self-contained ----
-# Anthropic Sans (UI text) + Anthropic Serif (article body), roman + italic each,
-# pulled from anthropic.com's own @font-face declarations and inlined as base64.
+# Anthropic Sans (UI text + article body), roman + italic, pulled from
+# anthropic.com's own @font-face declarations and inlined as base64.
 # The files are VARIABLE fonts (wght axis 300-800 — verified in-browser: the same
 # bytes render measurably wider at 700/800), so declaring the full range makes
 # every weight render with real glyphs instead of synthesized faux bold.
@@ -18,8 +18,6 @@ import base64
 _FONT_FILES = [
     ('AnthropicSans',  'fonts/AnthropicSans_Roman.woff2',  '300 800', 'normal'),
     ('AnthropicSans',  'fonts/AnthropicSans_Italic.woff2', '300 800', 'italic'),
-    ('AnthropicSerif', 'fonts/AnthropicSerif_Roman.woff2', '300 800', 'normal'),
-    ('AnthropicSerif', 'fonts/AnthropicSerif_Italic.woff2','300 800', 'italic'),
 ]
 def _font_face_css():
     out = []
@@ -81,6 +79,12 @@ LOGO_SVG = (
 
 def whale_logo(cls=''):
     return LOGO_SVG.format(cls=cls)
+
+# Data-URI version for the comparison chart rows (white pill background, so
+# the brand blue is fixed rather than theme-dependent)
+DS_LOGO_DATA = 'data:image/svg+xml;base64,' + base64.b64encode(
+    ('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 27 21">'
+     '<path d="%s" fill="#4D6BFE"/></svg>' % whale_path).encode()).decode()
 
 # ---- Timeline SVG ----
 def build_timeline_svg():
@@ -246,7 +250,6 @@ __FONTS_CSS__
   --accent-warm:     #d97757;
 
   --font-sans: 'AnthropicSans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  --font-serif: 'AnthropicSerif', Georgia, 'Times New Roman', serif;
   --page-margin: clamp(20px, 5vw, 80px);
   --ease-out-expo: cubic-bezier(0.19, 1, 0.22, 1);
   --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
@@ -1714,8 +1717,61 @@ body {
 // ===== Model comparison — latest flagships vs DeepSeek V4 Pro =====
 // COMPARE: one entry per benchmark; each lists models with {name, logo, v,
 // max?, fmt?, color}. Rows marked ds get the accent halo + badge.
+// Scores were verified online (2026-08-15) from each lab's official launch
+// posts / model cards; Grok rows are N/A because xAI didn't publish those
+// benchmarks. GPT-5.6's SWE-bench figure is vendor-reported and unofficial.
 (function() {
-  const COMPARE = [];  // populated by the build script
+  const DS_LOGO = 'DATAURI_DEEPSEEK_LOGO';
+  const COMPARE = [
+    {
+      name: 'SWE-bench Verified',
+      hint: 'GPT-5.6 figure vendor-reported, unofficial',
+      models: [
+        { name: 'GPT-5.6 Sol',    logo: 'https://upload.wikimedia.org/wikipedia/commons/a/af/OpenAI_logo_2025_%28wordmark%29.svg', v: 96.0, color: '#10A37F', note: '~96% reported by orcarouter.ai (July 2026), not independently audited; OpenAI publishes SWE-bench Pro instead' },
+        { name: 'Claude Fable 5', logo: 'https://upload.wikimedia.org/wikipedia/commons/7/78/Anthropic_logo.svg', v: 95.0, color: '#D97757', note: 'Official Claude Fable 5 system card, June 2026' },
+        { name: 'DeepSeek V4 Pro', logo: DS_LOGO, v: 80.6, color: 'var(--accent)', ds: true, note: 'Official DeepSeek-V4-Pro-0813 model card' },
+        { name: 'Gemini 3.1 Pro', logo: 'https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg', v: 80.6, color: '#F4B400', note: 'Official Google launch table, thinking mode on' },
+        { name: 'Grok 4.6',       logo: 'https://commons.wikimedia.org/wiki/Special:FilePath/Grok-feb-2025-logo.svg', v: null, color: '#B8C4DE', note: 'xAI does not publish SWE-bench Verified for Grok 4.6' },
+        { name: 'Llama 4 Maverick', logo: 'https://upload.wikimedia.org/wikipedia/commons/7/7b/Meta_Platforms_Inc._logo.svg', v: null, color: '#0668E1', note: 'Meta does not report SWE-bench Verified for Llama 4' }
+      ]
+    },
+    {
+      name: 'GPQA Diamond',
+      hint: 'Fable 5 figure third-party (vals.ai)',
+      models: [
+        { name: 'GPT-5.6 Sol',    logo: 'https://upload.wikimedia.org/wikipedia/commons/a/af/OpenAI_logo_2025_%28wordmark%29.svg', v: 94.6, color: '#10A37F', note: 'Official GPT-5.6 card, July 2026 GA' },
+        { name: 'Gemini 3.1 Pro', logo: 'https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg', v: 94.3, color: '#F4B400', note: 'Official Google launch table, thinking mode on' },
+        { name: 'Claude Fable 5', logo: 'https://upload.wikimedia.org/wikipedia/commons/7/78/Anthropic_logo.svg', v: 93.2, color: '#D97757', note: 'vals.ai run (Aug 2026); falls to ~55.6% if refusals count as failures' },
+        { name: 'DeepSeek V4 Pro', logo: DS_LOGO, v: 90.1, color: 'var(--accent)', ds: true, note: 'Official DeepSeek-V4-Pro-0813 model card' },
+        { name: 'Grok 4.6',       logo: 'https://commons.wikimedia.org/wiki/Special:FilePath/Grok-feb-2025-logo.svg', v: null, color: '#B8C4DE', note: 'Not published by xAI for Grok 4.6' },
+        { name: 'Llama 4 Maverick', logo: 'https://upload.wikimedia.org/wikipedia/commons/7/7b/Meta_Platforms_Inc._logo.svg', v: 69.8, color: '#0668E1', note: 'Official Meta card, 0-shot, t=0' }
+      ]
+    },
+    {
+      name: 'MMLU-Pro',
+      hint: 'third-party mirror leaderboard',
+      models: [
+        { name: 'Claude Fable 5', logo: 'https://upload.wikimedia.org/wikipedia/commons/7/78/Anthropic_logo.svg', v: 91.5, color: '#D97757', note: 'Vals MMLU-Pro mirror leaderboard, Aug 2026' },
+        { name: 'Gemini 3.1 Pro', logo: 'https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg', v: 91.4, color: '#F4B400', note: 'Official Google model card (gemini-3.1-pro-preview-0214)' },
+        { name: 'GPT-5.6 Sol',    logo: 'https://upload.wikimedia.org/wikipedia/commons/a/af/OpenAI_logo_2025_%28wordmark%29.svg', v: 89.1, color: '#10A37F', note: 'Vals MMLU-Pro mirror leaderboard, Aug 2026' },
+        { name: 'DeepSeek V4 Pro', logo: DS_LOGO, v: 87.5, color: 'var(--accent)', ds: true, note: 'Official DeepSeek-V4-Pro-0813 model card' },
+        { name: 'Grok 4.6',       logo: 'https://commons.wikimedia.org/wiki/Special:FilePath/Grok-feb-2025-logo.svg', v: null, color: '#B8C4DE', note: 'Not published by xAI for Grok 4.6' },
+        { name: 'Llama 4 Maverick', logo: 'https://upload.wikimedia.org/wikipedia/commons/7/7b/Meta_Platforms_Inc._logo.svg', v: 80.5, color: '#0668E1', note: 'Official Meta card, 0-shot, t=0' }
+      ]
+    },
+    {
+      name: 'Terminal-Bench',
+      hint: 'mixed versions: 2.0–3.0, not directly comparable',
+      models: [
+        { name: 'GPT-5.6 Sol',    logo: 'https://upload.wikimedia.org/wikipedia/commons/a/af/OpenAI_logo_2025_%28wordmark%29.svg', v: 88.8, color: '#10A37F', note: 'Terminal-Bench 2.1, official card, max reasoning, single agent' },
+        { name: 'DeepSeek V4 Pro', logo: DS_LOGO, v: 87.9, color: 'var(--accent)', ds: true, note: 'Terminal-Bench 2.1, official model card' },
+        { name: 'Claude Fable 5', logo: 'https://upload.wikimedia.org/wikipedia/commons/7/78/Anthropic_logo.svg', v: 84.3, color: '#D97757', note: 'Terminal-Bench 2.1, official system card (safety fallback drags it down)' },
+        { name: 'Gemini 3.1 Pro', logo: 'https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg', v: 68.5, color: '#F4B400', note: 'Terminal-Bench 2.0, official Google launch table' },
+        { name: 'Grok 4.6',       logo: 'https://commons.wikimedia.org/wiki/Special:FilePath/Grok-feb-2025-logo.svg', v: 26.0, color: '#B8C4DE', note: 'Terminal-Bench v3.0, official xAI launch table — a newer, harder version' },
+        { name: 'Llama 4 Maverick', logo: 'https://upload.wikimedia.org/wikipedia/commons/7/7b/Meta_Platforms_Inc._logo.svg', v: null, color: '#0668E1', note: 'Meta does not report Terminal-Bench for Llama 4' }
+      ]
+    }
+  ];
   const grid = document.querySelector('.compare-grid');
   if (!grid || !COMPARE.length) return;
   COMPARE.forEach(function(b) {
@@ -1752,9 +1808,15 @@ body {
       track.appendChild(bar);
       const score = document.createElement('span');
       score.className = 'compare-score';
-      score.textContent = m.fmt === 'elo'
-        ? m.v.toLocaleString('en-US') + ' Elo'
-        : (m.fmt === 'int' ? m.v.toFixed(0) + '%' : m.v.toFixed(1) + '%');
+      if (m.v == null) {
+        score.textContent = '—';      // lab didn't publish this benchmark
+        bar.style.opacity = '0.12';
+      } else {
+        score.textContent = m.fmt === 'elo'
+          ? m.v.toLocaleString('en-US') + ' Elo'
+          : (m.fmt === 'int' ? m.v.toFixed(0) + '%' : m.v.toFixed(1) + '%');
+      }
+      if (m.note) { score.title = m.note; }
       row.append(img, name, track, score);
       card.appendChild(row);
     });
@@ -1899,6 +1961,7 @@ PAGE = PAGE.replace('__WHALE_CELLS__', whale_cells_js)
 PAGE = PAGE.replace('__WHALE_W__', str(whale_w))
 PAGE = PAGE.replace('__WHALE_H__', str(whale_h))
 PAGE = PAGE.replace('__WHALE_PATH__', whale_path)
+PAGE = PAGE.replace('DATAURI_DEEPSEEK_LOGO', DS_LOGO_DATA)
 PAGE = PAGE.replace('__FONTS_CSS__', FONT_CSS)
 
 open(BASE + 'index.html', 'w', encoding='utf-8').write(PAGE)
