@@ -18,6 +18,8 @@ import base64
 _FONT_FILES = [
     ('AnthropicSans',  'fonts/AnthropicSans_Roman.woff2',  '300 800', 'normal'),
     ('AnthropicSans',  'fonts/AnthropicSans_Italic.woff2', '300 800', 'italic'),
+    ('AnthropicSerif', 'fonts/AnthropicSerif_Roman.woff2',  '300 800', 'normal'),
+    ('AnthropicSerif', 'fonts/AnthropicSerif_Italic.woff2', '300 800', 'italic'),
 ]
 def _font_face_css():
     out = []
@@ -250,6 +252,7 @@ __FONTS_CSS__
   --accent-warm:     #d97757;
 
   --font-sans: 'AnthropicSans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-serif: 'AnthropicSerif', Georgia, 'Times New Roman', serif;
   --page-margin: clamp(20px, 5vw, 80px);
   --ease-out-expo: cubic-bezier(0.19, 1, 0.22, 1);
   --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
@@ -299,7 +302,7 @@ html.theme-anim {
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; font-family: inherit; }
 html { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; scroll-behavior: smooth; }
 body {
-  font-family: var(--font-sans);
+  font-family: var(--font-serif);
   color: var(--text-primary);
   background: var(--bg-page);
   line-height: 1.6;
@@ -798,20 +801,20 @@ body {
   color: var(--text-primary);
 }
 .article p {
-  font-family: var(--font-sans); font-size: clamp(16px, 1.8vw, 17px);
+  font-family: var(--font-serif); font-size: clamp(16px, 1.8vw, 17px);
   line-height: 1.75; color: var(--text-secondary); margin-bottom: 20px;
 }
 .article p strong { color: var(--text-primary); font-weight: 600; }
 .article em { font-style: italic; }
 .article ul { margin: 0 0 20px 24px; }
 .article li {
-  font-family: var(--font-sans); font-size: 16px; line-height: 1.7;
+  font-family: var(--font-serif); font-size: 16px; line-height: 1.7;
   color: var(--text-secondary); margin-bottom: 12px;
 }
 .article li strong { color: var(--text-primary); }
 .article hr { border: none; border-top: 1px solid var(--border-subtle); margin: 56px 0; }
 .article blockquote {
-  font-family: var(--font-sans); font-size: clamp(24px, 3.5vw, 36px);
+  font-family: var(--font-serif); font-size: clamp(24px, 3.5vw, 36px);
   font-weight: 500; line-height: 1.4; color: var(--text-primary);
   border-left: 3px solid var(--accent); padding: 8px 0 8px 24px;
   margin: 48px 0;
@@ -1098,8 +1101,8 @@ body {
 
   // Growth-loop cadence (fast: ~1.5s grow, ~2s hold, quick dissolve, repeat)
   const TICK_MS = 70;        // ms between growth steps
-  const GROW_RATE = 0.8;     // front advance per tick (in cells) — snappy growth
-  const HOLD_TICKS = 26;     // full-whale hold duration (~1.8s)
+  const GROW_RATE = 1.5;     // front advance per tick (in cells) — snappy left-to-right sweep
+  const HOLD_TICKS = 34;     // full-whale hold duration (~2.4s)
 
   let w, h, cols, rows;
   let mx = -999, my = -999, tmx = -999, tmy = -999;
@@ -1113,9 +1116,8 @@ body {
 
   // ---- Whale data (built in resize) ----
   let whaleCells = [];   // [{gx,gy,dist}] all cells of the big silhouette
-  let whaleOrder = [];   // whaleCells sorted by distance from center
+  let whaleOrder = [];   // whaleCells sorted by dist (left->right sweep)
   let whaleSet = {};     // "gx,gy" -> true
-  let cx = 0, cy = 0;    // whale center (grid coords)
 
   // ---- Animation state ----
   // phase: 'grow' (front radiates outward) → 'hold' (full whale) → 'dissolve' (fade away) → repeat
@@ -1181,8 +1183,6 @@ body {
     if (oy + wH > rows) oy = rows - wH;
     if (ox < 0) ox = 0;
     if (oy < 0) oy = 0;
-    cx = ox + Math.floor(wW / 2);
-    cy = oy + Math.floor(wH / 2);
 
     const wmask = {};
     WC.forEach(function(c) { wmask[c[1] * WX + c[0]] = true; });
@@ -1193,10 +1193,18 @@ body {
         const sx = Math.floor(gx * WX / wW), sy = Math.floor(gy * WY / wH);
         if (!wmask[sy * WX + sx]) continue;
         const ax = gx + ox, ay = gy + oy;
-        whaleCells.push({ gx: ax, gy: ay, dist: Math.hypot(ax - cx, ay - cy) });
+        whaleCells.push({ gx: ax, gy: ay });
         whaleSet[ax + ',' + ay] = true;
       }
-    whaleOrder = whaleCells.slice().sort(function(a, b) { return a.dist - b.dist; });
+    // Light the whale from its head (leftmost cell) sweeping toward the tail, so
+    // the left end is never missing while the growth front is still advancing.
+    let minGx = Infinity, maxGx = -Infinity;
+    whaleCells.forEach(function(c) {
+      if (c.gx < minGx) minGx = c.gx;
+      if (c.gx > maxGx) maxGx = c.gx;
+    });
+    whaleCells.forEach(function(c) { c.dist = c.gx - minGx; });
+    whaleOrder = whaleCells.slice().sort(function(a, b) { return a.dist - b.dist || a.gy - b.gy; });
     frontMax = whaleOrder.length ? whaleOrder[whaleOrder.length - 1].dist : 1;
 
     cells = {};
@@ -1342,7 +1350,7 @@ body {
   const cv = document.getElementById('fx-canvas');
   const ctx = cv.getContext('2d');
   let w = window.innerWidth, h = window.innerHeight;
-  const MAX_PARTICLES = 900;
+  const MAX_PARTICLES = 1600;
   let particles = [];
   let mx = -999, my = -999, tmx = -999, tmy = -999;
   let lastMx = -999, lastMy = -999;
@@ -1461,10 +1469,10 @@ body {
   }
 
   function seed() {
-    // Night-sky density: ~5x the earlier sparse field, with a slow drift and
-    // per-particle twinkle (see draw). Density scales with area: ~220 stars
-    // on a 1536×647 window.
-    const n = Math.round((w * h) / 4500);
+    // Night-sky density: ~7x the sparse field of the first version, with a slow
+    // drift and per-particle twinkle (see draw). Density scales with area:
+    // ~380 stars on a 1536×647 window.
+    const n = Math.round((w * h) / 2600);
     for (let i = 0; i < n; i++) {
       spawn(Math.random() * w, Math.random() * h,
         (Math.random() - 0.5) * 0.22, (Math.random() - 0.5) * 0.22,
