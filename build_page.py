@@ -739,7 +739,8 @@ body {
 }
 .compare-card h3 .compare-hint { font-size: 12px; font-weight: 400; color: var(--text-tertiary); }
 .compare-row {
-  display: flex; align-items: center; gap: 10px; padding: 10px 0;
+  display: grid; grid-template-columns: 28px minmax(0, 1fr) auto; gap: 6px 10px; padding: 10px 0;
+  align-items: center;
 }
 .compare-row + .compare-row { border-top: 1px solid var(--border-subtle); }
 /* DeepSeek row: accent halo so the home team pops out of the pack */
@@ -751,15 +752,16 @@ body {
 }
 .compare-logo {
   width: 28px; height: 28px; flex: 0 0 28px; border-radius: 7px;
-  object-fit: contain;
+  object-fit: contain; grid-row: 1 / 3; align-self: center;
 }
 /* Single-colour brand marks (OpenAI bloom, Grok) are black-on-transparent;
    invert them so they stay visible on the dark glass cards. */
 [data-theme="dark"] .compare-logo.logo-invert { filter: invert(1); }
+/* Name sits on its own line above the bar, so bars always start at the same
+   column — and long names render in full, no ellipsis needed. */
 .compare-name {
-  font-size: 14px; font-weight: 500; color: var(--text-primary);
-  white-space: nowrap; flex: 0 0 auto; max-width: 150px; overflow: hidden;
-  text-overflow: ellipsis;
+  grid-column: 2; font-size: 14px; font-weight: 500; color: var(--text-primary);
+  white-space: nowrap; overflow: visible; min-width: 0;
 }
 .compare-name .compare-badge {
   display: inline-block; margin-left: 6px; padding: 1px 7px; border-radius: 999px;
@@ -767,7 +769,7 @@ body {
   background: var(--accent); color: #fff; vertical-align: 1px;
 }
 .compare-track {
-  flex: 1 1 auto; height: 7px; border-radius: 4px; overflow: hidden;
+  grid-column: 2 / 4; grid-row: 2; height: 7px; border-radius: 4px; overflow: hidden;
   background: color-mix(in srgb, var(--text-primary) 8%, transparent);
 }
 .compare-bar {
@@ -778,7 +780,7 @@ body {
 }
 .compare-card.entered .compare-bar { transform: scaleX(var(--bar-ratio, 1)); }
 .compare-score {
-  flex: 0 0 auto; font-size: 14px; font-weight: 600;
+  grid-column: 3; grid-row: 1; justify-self: end; font-size: 14px; font-weight: 600;
   color: var(--text-primary); font-variant-numeric: tabular-nums; min-width: 52px; text-align: right;
 }
 .compare-row.is-ds .compare-score { color: var(--accent-bright); }
