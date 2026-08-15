@@ -597,19 +597,19 @@ body {
   background: color-mix(in srgb, var(--text-primary) 8%, transparent);
 }
 .compare-bar {
-  height: 100%; width: 100%; border-radius: 4px;
+  height: 100%; width: 0; border-radius: 4px;
   background: linear-gradient(90deg, color-mix(in srgb, var(--bar-color) 25%, transparent), var(--bar-color));
-  transform: scaleX(0); transform-origin: left;
-  transition: transform 0.8s cubic-bezier(0.23, 1, 0.32, 1);
+  transition: width 0.8s cubic-bezier(0.23, 1, 0.32, 1);
 }
-.compare-card.entered .compare-bar { transform: scaleX(var(--bar-ratio, 1)); }
+/* width (not scaleX) so the rounded ends never flatten on short bars */
+.compare-card.entered .compare-bar { width: calc(var(--bar-ratio, 0) * 100%); }
 .compare-score {
   grid-column: 3; grid-row: 1; justify-self: end; font-size: 14px; font-weight: 600;
   color: var(--text-primary); font-variant-numeric: tabular-nums; min-width: 52px; text-align: right;
 }
 .compare-row.is-ds .compare-score { color: var(--accent-bright); }
 @media (prefers-reduced-motion: reduce) {
-  .compare-bar { transition: none; transform: scaleX(var(--bar-ratio, 1)); }
+  .compare-bar { transition: none; width: calc(var(--bar-ratio, 0) * 100%); }
 }
 
 /* ===== Article ===== */
@@ -1091,9 +1091,9 @@ body {
   const PITCH = CS + GAP;
   const RADIUS = CS * 0.18;  // rounded corners
 
-  // Growth-loop cadence: ~2s grow, ~3.5s hold, quick dissolve, repeat
+  // Growth-loop cadence: ~1.5s grow, ~3.5s hold, ~1.5s erase, repeat
   const TICK_MS = 70;        // ms between growth steps
-  const GROW_RATE = 1.5;     // average front advance per tick (in cells) — radial wave
+  const GROW_RATE = 0.6;     // front advance per tick (in cells) — steady linear wave
   const HOLD_TICKS = 50;     // full-whale hold duration (~3.5s)
 
   let w, h, cols, rows;
@@ -1112,9 +1112,12 @@ body {
   let whaleSet = {};     // "gx,gy" -> true
 
   // ---- Animation state ----
-  // phase: 'grow' (front radiates outward) → 'hold' (full whale) → 'dissolve' (fade away) → repeat
-  let cells = {};        // "gx,gy" -> {a, phase}
+  // phase: 'grow' (front radiates outward) → 'hold' (full whale) → 'erase'
+  // (front retreats inward, heart first) → repeat
+  let cells = {};        // "gx,gy" -> {a, ta, phase, dist}
   let front = 0;         // current growth-front radius (in cells)
+  let eraseFront = 0;    // current erase-front radius: cells closer to the
+                         // heart than this are being extinguished
   let frontMax = 1;
   let cycle = 0;         // ticks spent in current phase
   let lastTick = 0;
@@ -1198,6 +1201,7 @@ body {
 
     cells = {};
     front = 0;
+    eraseFront = 0;
     cycle = 0;
   }
 
@@ -1209,30 +1213,36 @@ body {
   function step() {
     cycle += 1;
     const growTicks = Math.ceil(frontMax / GROW_RATE);
-    const dissolving = cycle > growTicks + HOLD_TICKS;
+    const eraseTicks = Math.ceil(frontMax / GROW_RATE);
+    const holdEnd = growTicks + HOLD_TICKS;
+    const erasing = cycle > holdEnd;
     if (cycle < growTicks) {
-      // growing: the front swells with an ease-in-out wave — slow burst from
-      // the heart, full speed through the body, gentle settle at the fins
-      const p = cycle / growTicks;
-      front = frontMax * (1 - Math.cos(Math.PI * p)) / 2;
-    } else if (dissolving) {
-      // dissolving: fade everything out, then start a fresh cycle
+      // growing: the front expands at a steady linear pace — one ring of
+      // cells after another, like a ripple spreading across the whale
+      front = Math.min(frontMax, front + GROW_RATE);
+    } else if (erasing) {
+      // erasing: the front retreats back toward the heart, so the whale
+      // collapses inward — the center goes dark first, the outer rim last
+      eraseFront = Math.min(frontMax, eraseFront + GROW_RATE);
       for (const key in cells) {
-        cells[key].a -= 0.09;
-        if (cells[key].a <= 0.02) delete cells[key];
+        const cell = cells[key];
+        if (cell.dist <= eraseFront) {
+          cell.a -= 0.28;
+          if (cell.a <= 0.02) delete cells[key];
+        }
       }
-      if (!Object.keys(cells).length) { front = 0; cycle = 0; }
+      if (!Object.keys(cells).length) { front = 0; eraseFront = 0; cycle = 0; }
     } else {
       front = frontMax;
     }
-    if (dissolving) return;  // don't re-light cells mid-dissolve
+    if (erasing) return;  // don't re-light cells while the whale collapses
     // light cells whose distance <= front, and fade ones behind
     for (let i = 0; i < whaleOrder.length; i++) {
       const c = whaleOrder[i];
       const key = c.gx + ',' + c.gy;
       const target = c.dist <= front ? 1 : 0;
       if (target === 1) {
-        if (!cells[key]) cells[key] = { a: 0.12, ta: pickAlpha(), phase: Math.random() * 6.28 };
+        if (!cells[key]) cells[key] = { a: 0.12, ta: pickAlpha(), phase: Math.random() * 6.28, dist: c.dist };
         else if (cells[key].a < cells[key].ta) cells[key].a = Math.min(cells[key].ta, cells[key].a + 0.22);
       } else if (cells[key] && cycle < growTicks) {
         // fade out cells behind the front
@@ -1790,7 +1800,6 @@ body {
       const bv = (b.v == null) ? -1 : b.v;
       return bv - av; // highest first; unpublished (—) sink to the bottom
     });
-    const maxV = sorted.reduce(function(acc, m) { return (m.v != null && m.v > acc) ? m.v : acc; }, 0);
     sorted.forEach(function(m) {
       const row = document.createElement('div');
       row.className = 'compare-row' + (m.ds ? ' is-ds' : '');
@@ -1804,7 +1813,8 @@ body {
       name.textContent = m.name;
       if (m.ds) {
         const badge = document.createElement('span');
-        badge.className = 'compare-badge'; badge.textContent = 'V4 Pro';
+        badge.className = 'compare-badge';
+        badge.textContent = 'No. ' + (sorted.indexOf(m) + 1);
         name.appendChild(badge);
       }
       const track = document.createElement('div');
@@ -1812,7 +1822,9 @@ body {
       const bar = document.createElement('div');
       bar.className = 'compare-bar';
       bar.style.setProperty('--bar-color', m.color);
-      bar.style.setProperty('--bar-ratio', m.v == null ? '0' : Math.max(0.02, m.v / maxV).toFixed(4));
+      // Bar length equals the displayed score: 96.2% renders as 96.2% of the
+      // track, so the full track always means 100 — not the top score.
+      bar.style.setProperty('--bar-ratio', m.v == null ? '0' : Math.min(1, Math.max(0.02, m.v / 100)).toFixed(4));
       track.appendChild(bar);
       const score = document.createElement('span');
       score.className = 'compare-score';
